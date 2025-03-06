@@ -1,0 +1,4 @@
+I want to learn graphQl in node js - so give me a table of 30 having having colum id , project like task name , learning outcomes , task description convering all concepts of Graph QL - give me all practically work 
+
+
+Hi, i am learning graph ql in which i am doing task {paste} so explain how to do this in node js typescript apollo
