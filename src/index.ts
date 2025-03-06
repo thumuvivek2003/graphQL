@@ -8,6 +8,7 @@ import bodyParser from "body-parser";
 const typeDefs = `
   type Query {
     hello: String
+    hello2:String
   }
 `;
 
@@ -15,6 +16,7 @@ const typeDefs = `
 const resolvers = {
   Query: {
     hello: () => "Hello, Apollo GraphQL with TypeScript!",
+    hello2: () => "Hello, Apollo GraphQL with TypeScript!",
   },
 };
 
