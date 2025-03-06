@@ -2,3 +2,11 @@ I want to learn graphQl in node js - so give me a table of 30 having having colu
 
 
 Hi, i am learning graph ql in which i am doing task {paste} so explain how to do this in node js typescript apollo
+
+okay i want to addition substraction and multiplication resolvers took 2 numbers a and b 
+
+query Query($a: Float!, $b: Float!, $addA2: Float!, $addB2: Float!) {
+  add(a: $a, b: $b)
+  add(a: $addA2, b: $addB2)
+}  here how to differ field this ?
+
