@@ -1,0 +1,4 @@
+Why @apollo vs Apollo 
+gql vs direct type definitions 
+
+Learning outcomes : Parameter Passing 
