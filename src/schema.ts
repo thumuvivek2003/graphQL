@@ -1,18 +1,18 @@
-// schema.ts
 import { gql } from "apollo-server";
 
 export const typeDefs = gql`
-  type Query {
-    hello: String
-    getUser(id: Int!): User
-    add(a: Float!, b: Float!): Float
-    subtract(a: Float!, b: Float!): Float
-    multiply(a: Float!, b: Float!): Float
+  type User {
+    id: ID!
+    name: String!
+    email: String!
   }
 
-  type User {
-    id: Int
-    name: String
-    email: String
+  type Query {
+    users: [User!]!
+  }
+
+  type Mutation {
+    addUser(name: String!, email: String!): User!
+    updateUser(id: ID!, name: String, email: String): User!
   }
 `;

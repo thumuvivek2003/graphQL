@@ -1,34 +1,32 @@
-// resolvers.ts
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+const users: User[] = [];
+
 export const resolvers = {
   Query: {
-    hello: () => {
-      return "Hello, world!";
+    users: () => users,
+  },
+  Mutation: {
+    addUser: (_: any, { name, email }: { name: string; email: string }) => {
+      const newUser: User = { id: String(users.length + 1), name, email };
+      users.push(newUser);
+      return newUser;
     },
+    updateUser: (
+      _: any,
+      { id, name, email }: { id: string; name?: string; email?: string }
+    ) => {
+      const user = users.find((user) => user.id === id);
+      if (!user) throw new Error("User not found");
 
-    getUser: (_: any, { id }: { id: number }) => {
-      // Mock data for users (just as before)
-      const users = [
-        { id: 1, name: "John Doe", email: "john.doe@example.com" },
-        { id: 2, name: "Jane Smith", email: "jane.smith@example.com" },
-        { id: 3, name: "Sam Brown", email: "sam.brown@example.com" },
-      ];
+      if (name) user.name = name;
+      if (email) user.email = email;
 
-      return users.find((user) => user.id === id);
-    },
-
-    // Add two numbers
-    add: (_: any, { a, b }: { a: number; b: number }) => {
-      return a + b;
-    },
-
-    // Subtract two numbers
-    subtract: (_: any, { a, b }: { a: number; b: number }) => {
-      return a - b;
-    },
-
-    // Multiply two numbers
-    multiply: (_: any, { a, b }: { a: number; b: number }) => {
-      return a * b;
+      return user;
     },
   },
 };
