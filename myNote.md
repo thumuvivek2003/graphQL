@@ -1073,3 +1073,260 @@ fragment UserDetails on User {
 ✅ Use **Fragments** to create reusable parts of queries.  
 ✅ Optimize **Resolvers** to avoid over-fetching data.  
 ✅ Use **Batching and Caching** (e.g., DataLoader) for performance improvement.  
+
+
+### GraphQL Nested Queries
+Since you want to use **MongoDB** instead of mock data, we will modify our implementation to fetch users and posts from a **MongoDB database**.
+
+---
+
+## **1. Install Dependencies**
+Run the following command to install the necessary packages:
+
+```sh
+npm install apollo-server graphql mongoose dotenv
+npm install --save-dev typescript ts-node nodemon @types/node
+```
+
+---
+
+## **2. Set Up MongoDB Connection**
+Create a `.env` file to store your **MongoDB connection string**:
+
+```env
+MONGO_URI=mongodb://localhost:27017/graphql_db
+```
+
+Now, create a **database connection file**.
+
+### **Create `db.ts`**
+```ts
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+export const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI as string);
+    console.log("✅ MongoDB Connected");
+  } catch (error) {
+    console.error("❌ MongoDB Connection Failed:", error);
+    process.exit(1);
+  }
+};
+```
+
+---
+
+## **3. Define MongoDB Models**
+Instead of mock data, we will now use **MongoDB schemas** for Users and Posts.
+
+### **Create `models/User.ts`**
+```ts
+import mongoose from "mongoose";
+
+const UserSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+});
+
+export const UserModel = mongoose.model("User", UserSchema);
+```
+
+---
+
+### **Create `models/Post.ts`**
+```ts
+import mongoose from "mongoose";
+
+const PostSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  content: { type: String, required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+});
+
+export const PostModel = mongoose.model("Post", PostSchema);
+```
+
+---
+
+## **4. Define GraphQL Schema**
+We define the schema using **SDL**.
+
+### **Create `schema.ts`**
+```ts
+import { gql } from "apollo-server";
+
+export const typeDefs = gql`
+  type User {
+    id: ID!
+    name: String!
+    posts: [Post!]!
+  }
+
+  type Post {
+    id: ID!
+    title: String!
+    content: String!
+    user: User!
+  }
+
+  type Query {
+    getUsers: [User!]!
+    getUser(id: ID!): User
+    getPosts: [Post!]!
+    getPost(id: ID!): Post
+  }
+
+  type Mutation {
+    createUser(name: String!): User!
+    createPost(title: String!, content: String!, userId: ID!): Post!
+  }
+`;
+```
+
+---
+
+## **5. Define Resolvers**
+Now, we create resolvers that **fetch data from MongoDB** instead of using mock data.
+
+### **Create `resolvers.ts`**
+```ts
+import { UserModel } from "./models/User";
+import { PostModel } from "./models/Post";
+
+export const resolvers = {
+  Query: {
+    getUsers: async () => await UserModel.find(),
+    getUser: async (_: any, { id }: { id: string }) => await UserModel.findById(id),
+    getPosts: async () => await PostModel.find(),
+    getPost: async (_: any, { id }: { id: string }) => await PostModel.findById(id),
+  },
+
+  User: {
+    posts: async (parent: any) => await PostModel.find({ userId: parent.id }), // Fetch posts related to the user
+  },
+
+  Post: {
+    user: async (parent: any) => await UserModel.findById(parent.userId), // Fetch user for a post
+  },
+
+  Mutation: {
+    createUser: async (_: any, { name }: { name: string }) => {
+      const newUser = new UserModel({ name });
+      return await newUser.save();
+    },
+    createPost: async (_: any, { title, content, userId }: { title: string, content: string, userId: string }) => {
+      const newPost = new PostModel({ title, content, userId });
+      return await newPost.save();
+    },
+  },
+};
+```
+
+---
+
+## **6. Set Up Apollo Server**
+Now, set up **Apollo Server** with MongoDB.
+
+### **Create `index.ts`**
+```ts
+import { ApolloServer } from "apollo-server";
+import { typeDefs } from "./schema";
+import { resolvers } from "./resolvers";
+import { connectDB } from "./db";
+
+const startServer = async () => {
+  await connectDB(); // Connect to MongoDB
+
+  const server = new ApolloServer({ typeDefs, resolvers });
+
+  server.listen(4000).then(({ url }) => {
+    console.log(`🚀 Server ready at ${url}`);
+  });
+};
+
+startServer();
+```
+
+---
+
+## **7. Run the Server**
+Make sure MongoDB is running on your local machine. Then, start the server:
+
+```sh
+npx ts-node index.ts
+```
+
+If MongoDB is **not running**, start it using:
+
+```sh
+mongod --dbpath /data/db
+```
+
+---
+
+## **8. Test Queries in GraphQL Playground**
+Go to **http://localhost:4000** and run the following queries.
+
+### **Create a User**
+```graphql
+mutation {
+  createUser(name: "Alice") {
+    id
+    name
+  }
+}
+```
+
+### **Create a Post**
+```graphql
+mutation {
+  createPost(title: "GraphQL Basics", content: "Introduction to GraphQL", userId: "USER_ID_HERE") {
+    id
+    title
+    content
+  }
+}
+```
+Replace `"USER_ID_HERE"` with the actual `id` of the user created earlier.
+
+### **Fetch Users and Their Posts**
+```graphql
+query {
+  getUsers {
+    id
+    name
+    posts {
+      id
+      title
+      content
+    }
+  }
+}
+```
+
+### **Fetch Posts and Their Users**
+```graphql
+query {
+  getPosts {
+    id
+    title
+    content
+    user {
+      id
+      name
+    }
+  }
+}
+```
+
+---
+
+## **Summary**
+✅ **Connected MongoDB to GraphQL using Mongoose**  
+✅ **Created `User` and `Post` models**  
+✅ **Implemented resolvers that fetch data from the database**  
+✅ **Handled nested queries for `User.posts` and `Post.user`**  
+✅ **Added `Mutation` to create users and posts**  
+

@@ -1,38 +1,16 @@
-import { ApolloServer, gql } from "apollo-server";
+import { ApolloServer } from "apollo-server";
+import { typeDefs } from "./graphQL/schema";
+import { resolvers } from "./graphQL/resolvers";
+import { connectDB } from "./db";
 
-// Define Type Definitions (Schema)
-const typeDefs = gql`
-  type User {
-    id: ID!
-    name: String!
-    age: Int!
-    email: String!
-  }
+const startServer = async () => {
+  await connectDB(); // Connect to MongoDB
 
-  type Query {
-    getUser(id: ID!): User
-    allUsers: [User!]!
-  }
-`;
+  const server = new ApolloServer({ typeDefs, resolvers });
 
-// Sample Data
-const users = [
-  { id: "1", name: "Alice", age: 25, email: "alice@example.com" },
-  { id: "2", name: "Bob", age: 30, email: "bob@example.com" },
-];
-
-// Define Resolvers
-const resolvers = {
-  Query: {
-    getUser: (_: any, { id }: { id: string }) =>
-      users.find((user) => user.id === id),
-    allUsers: () => users,
-  },
+  server.listen(4000).then(({ url }) => {
+    console.log(`🚀 Server ready at ${url}`);
+  });
 };
 
-// Create and Start Apollo Server
-const server = new ApolloServer({ typeDefs, resolvers });
-
-server.listen().then(({ url }) => {
-  console.log(`🚀 Server ready at ${url}`);
-});
+startServer();
