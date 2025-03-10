@@ -869,3 +869,207 @@ query {
 ✔ **Returns books if at least one condition matches.**  
 
 Let me know if you need any changes! 🚀
+
+
+Great! Optimizing GraphQL queries using **Aliases** and **Fragments** in a **Node.js TypeScript Apollo Server** setup involves structuring your queries to be more efficient and reusable.
+
+---
+
+## **1. Understanding Aliases and Fragments**
+- **Aliases:** Help rename fields in the response to prevent conflicts when querying the same field multiple times with different arguments.
+- **Fragments:** Allow reusability by defining shared parts of a query.
+
+---
+
+## **2. Setting Up GraphQL with Apollo Server in Node.js and TypeScript**
+If you haven’t already set up Apollo Server with TypeScript, follow these steps:
+
+### **Install dependencies**
+```sh
+npm init -y
+npm install apollo-server graphql
+npm install --save-dev @types/graphql
+```
+
+### **Create an Apollo Server**
+Create a file **`server.ts`**:
+
+```typescript
+import { ApolloServer, gql } from "apollo-server";
+
+// Define Type Definitions (Schema)
+const typeDefs = gql`
+  type User {
+    id: ID!
+    name: String!
+    age: Int!
+    email: String!
+  }
+
+  type Query {
+    getUser(id: ID!): User
+    allUsers: [User!]!
+  }
+`;
+
+// Sample Data
+const users = [
+  { id: "1", name: "Alice", age: 25, email: "alice@example.com" },
+  { id: "2", name: "Bob", age: 30, email: "bob@example.com" },
+];
+
+// Define Resolvers
+const resolvers = {
+  Query: {
+    getUser: (_: any, { id }: { id: string }) => users.find((user) => user.id === id),
+    allUsers: () => users,
+  },
+};
+
+// Create and Start Apollo Server
+const server = new ApolloServer({ typeDefs, resolvers });
+
+server.listen().then(({ url }) => {
+  console.log(`🚀 Server ready at ${url}`);
+});
+```
+
+---
+
+## **3. Using GraphQL Aliases**
+Aliases help rename fields when querying the same field multiple times with different arguments.
+
+### **Example Query Using Aliases**
+```graphql
+query {
+  alice: getUser(id: "1") {
+    name
+    email
+  }
+  bob: getUser(id: "2") {
+    name
+    email
+  }
+}
+```
+
+### **Response**
+```json
+{
+  "data": {
+    "alice": {
+      "name": "Alice",
+      "email": "alice@example.com"
+    },
+    "bob": {
+      "name": "Bob",
+      "email": "bob@example.com"
+    }
+  }
+}
+```
+**💡 Benefits:**  
+- Avoids conflicts when querying the same field multiple times.
+- Helps rename fields in a meaningful way.
+
+---
+
+## **4. Using GraphQL Fragments**
+Fragments allow reusing query structures across multiple queries.
+
+### **Defining a Fragment**
+```graphql
+query {
+  allUsers {
+    ...UserDetails
+  }
+}
+
+fragment UserDetails on User {
+  name
+  age
+  email
+}
+```
+
+### **Response**
+```json
+{
+  "data": {
+    "allUsers": [
+      {
+        "name": "Alice",
+        "age": 25,
+        "email": "alice@example.com"
+      },
+      {
+        "name": "Bob",
+        "age": 30,
+        "email": "bob@example.com"
+      }
+    ]
+  }
+}
+```
+
+**💡 Benefits:**  
+- Reduces query repetition.
+- Makes queries cleaner and more modular.
+
+---
+
+## **5. Combining Aliases and Fragments**
+You can use both together to optimize complex queries.
+
+### **Example Query**
+```graphql
+query {
+  alice: getUser(id: "1") {
+    ...UserDetails
+  }
+  bob: getUser(id: "2") {
+    ...UserDetails
+  }
+}
+
+fragment UserDetails on User {
+  name
+  age
+  email
+}
+```
+
+### **Response**
+```json
+{
+  "data": {
+    "alice": {
+      "name": "Alice",
+      "age": 25,
+      "email": "alice@example.com"
+    },
+    "bob": {
+      "name": "Bob",
+      "age": 30,
+      "email": "bob@example.com"
+    }
+  }
+}
+```
+
+---
+
+## **6. Running the Server and Testing Queries**
+1. Run the Apollo Server:
+   ```sh
+   npx ts-node server.ts
+   ```
+2. Open **http://localhost:4000** and use Apollo Explorer or Postman to test the queries.
+
+---
+
+## **7. Best Practices for GraphQL Optimization**
+✅ Use **Aliases** to avoid conflicts when querying the same field with different parameters.  
+✅ Use **Fragments** to create reusable parts of queries.  
+✅ Optimize **Resolvers** to avoid over-fetching data.  
+✅ Use **Batching and Caching** (e.g., DataLoader) for performance improvement.  
