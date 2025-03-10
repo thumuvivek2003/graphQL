@@ -30,5 +30,16 @@ export const resolvers: Resolvers = {
 
       return result;
     },
+    books2: (_, args) => {
+      return books.filter((book) => {
+        return (
+          (args.id && book.id.toLowerCase().includes(args.id.toLowerCase())) ||
+          (args.title &&
+            book.title.toLowerCase().includes(args.title.toLowerCase())) ||
+          (args.author &&
+            book.author.toLowerCase().includes(args.author.toLowerCase()))
+        );
+      });
+    },
   },
 };

@@ -9,5 +9,6 @@ export const typeDefs = gql`
 
   type Query {
     books(title: String, author: String, id: String): [Book]
+    books2(title: String, author: String, id: String): [Book]
   }
 `;

@@ -770,3 +770,102 @@ query {
 - Implement **authentication** with JWT.
 
 Let me know if you need more help! 🚀
+
+### If we want or gate 
+
+To use **OR (`||`)** instead of **AND (`&&`)** while filtering books, update your resolver logic like this:
+
+### **Updated Resolvers (`resolvers.ts`)**
+```ts
+import { Resolvers } from "./types";
+
+const books = [
+  { id: "1", title: "The Great Gatsby", author: "F. Scott Fitzgerald" },
+  { id: "2", title: "To Kill a Mockingbird", author: "Harper Lee" },
+  { id: "3", title: "1984", author: "George Orwell" },
+];
+
+export const resolvers: Resolvers = {
+  Query: {
+    books: (_, args) => {
+      return books.filter((book) => {
+        return (
+          (args.id && book.id.toLowerCase().includes(args.id.toLowerCase())) ||
+          (args.title &&
+            book.title.toLowerCase().includes(args.title.toLowerCase())) ||
+          (args.author &&
+            book.author.toLowerCase().includes(args.author.toLowerCase()))
+        );
+      });
+    },
+  },
+};
+```
+
+### **Changes Made:**
+1. Used `.filter()` only **once** and applied the `OR` (`||`) condition inside it.
+2. Now, if **any** of the conditions match (`id`, `title`, or `author`), the book is **included** in the result.
+3. Ensured it checks for **each argument separately**.
+
+---
+
+### **Example Queries & Results**
+#### **Query 1: Find by Title OR Author**
+```graphql
+query {
+  books(title: "1984", author: "Harper Lee") {
+    id
+    title
+    author
+  }
+}
+```
+**Returns:**
+```json
+[
+  {
+    "id": "2",
+    "title": "To Kill a Mockingbird",
+    "author": "Harper Lee"
+  },
+  {
+    "id": "3",
+    "title": "1984",
+    "author": "George Orwell"
+  }
+]
+```
+
+#### **Query 2: Find by ID OR Title**
+```graphql
+query {
+  books(id: "1", title: "Mockingbird") {
+    id
+    title
+    author
+  }
+}
+```
+**Returns:**
+```json
+[
+  {
+    "id": "1",
+    "title": "The Great Gatsby",
+    "author": "F. Scott Fitzgerald"
+  },
+  {
+    "id": "2",
+    "title": "To Kill a Mockingbird",
+    "author": "Harper Lee"
+  }
+]
+```
+---
+
+### **✅ Summary**
+✔ **Uses OR (`||`) logic** instead of AND (`&&`).  
+✔ **Filters books based on `id`, `title`, or `author`** independently.  
+✔ **Returns books if at least one condition matches.**  
+
+Let me know if you need any changes! 🚀
