@@ -30,3 +30,544 @@
 | 28     | Testing GraphQL APIs                        | Testing Methods                                                                                  | Write unit tests and integration tests for GraphQL APIs using Jest and Apollo Server Testing tools.                                                                               |
 | 29     | Deployment of GraphQL Server                | Deployment, Hosting                                                                              | Deploy the GraphQL server to cloud services (Heroku, AWS, or DigitalOcean), configure environment variables, and optimize for production use.                                     |
 | 30     | Project Capstone                            | End-to-End GraphQL Application                                                                   | Build an end-to-end GraphQL app integrating authentication, authorization, database storage, file uploads, subscriptions, schema federation, testing, monitoring, and deployment. |
+
+
+### GraphQL Mutations
+#### What is Mutation ?
+GraphQL mutations allow you to modify data (add, update, delete) in an API. 
+In this guide, we will implement basic mutations.
+
+
+#### Steps
+1. Define GraphQL Schema
+2. Implement Resolvers
+
+#### 1. Define GraphQL Schema
+
+GraphQL schemas define the data structure and operations available in the API.
+
+- For creating schema - Create a `schema.ts` file, which defines the types, queries, and mutations.
+
+##### Code
+```ts
+import { gql } from "apollo-server";
+
+export const typeDefs = gql`
+  # Define a types - here User type with id, name, and email
+  type User {
+    id: ID!
+    name: String!
+    email: String!
+  }
+
+  # Define queries for fetching data
+  type Query {
+    users: [User!]!
+  }
+
+  # Define mutations for modifying data
+  type Mutation {
+    addUser(name: String!, email: String!): User!
+    updateUser(id: ID!, name: String, email: String): User!
+  }
+`;
+```
+
+##### Explaination
+
+- **`User` type:** Represents a user with `id`, `name`, and `email`.
+- **`Query` type:**
+  - `users`: Fetch all users.
+- **`Mutation` type:**
+  - `addUser(name, email)`: Adds a new user.
+  - `updateUser(id, name, email)`: Updates an existing user.
+
+---
+
+#### 2. Implement Resolvers
+
+Resolvers define how queries and mutations interact with data.
+
+##### 2.1 Create a `resolvers.ts` File
+
+```ts
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+// In-memory array to store users
+const users: User[] = [];
+
+export const resolvers = {
+  Query: {
+    // Fetch all users
+    users: () => users,
+  },
+  Mutation: {
+    // Add a new user
+    addUser: (_: any, { name, email }: { name: string; email: string }) => {
+      const newUser: User = { id: data.lenght + 1, name, email };
+      users.push(newUser);
+      return newUser;
+    },
+
+    // Update an existing user
+    updateUser: (
+      _: any,
+      { id, name, email }: { id: string; name?: string; email?: string }
+    ) => {
+      const user = users.find((user) => user.id === id);
+      if (!user) throw new Error("User not found");
+
+      if (name) user.name = name;
+      if (email) user.email = email;
+
+      return user;
+    },
+  },
+};
+```
+
+##### Explaination
+
+- **`Query.users`**: Returns all users from the array.
+- **`Mutation.addUser`**:
+  - Generates a **ID** using `length+1` 1 based index .
+  - Adds a new user to the array.
+  - Returns the created user.
+- **`Mutation.updateUser`**:
+  - Finds the user by ID.
+  - Updates name and/or email if provided.
+  - Returns the updated user.
+
+---
+
+#### Set Up Apollo Server
+Now, we will configure **Apollo Server** to handle GraphQL requests.
+
+##### Create a `server.ts` File
+
+```ts
+import { ApolloServer } from "apollo-server";
+import { typeDefs } from "./schema";
+import { resolvers } from "./resolvers";
+
+// Create Apollo Server instance
+const server = new ApolloServer({ typeDefs, resolvers });
+
+// Start the server
+server.listen().then(({ url }) => {
+  console.log(`🚀 Server ready at ${url}`);
+});
+```
+
+##### Explaination
+
+- Imports **type definitions** and **resolvers**.
+- Creates an **Apollo Server** instance.
+- Starts the server and logs the URL.
+
+
+#### Run the Server
+
+Start the TypeScript server using:
+
+```sh
+npm run dev
+```
+
+You should see:
+
+```
+🚀 Server ready at http://localhost:4000
+```
+
+
+#### Testing Mutations in GraphQL Playground
+Once the server is running, open GraphQL Playground at:
+
+👉 http://localhost:4000
+
+##### 6.1 Add a User
+
+**Mutation:**
+
+```graphql
+mutation {
+  addUser(name: "John Doe", email: "john@example.com") {
+    id
+    name
+    email
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "data": {
+    "addUser": {
+      "id": "some-uuid",
+      "name": "John Doe",
+      "email": "john@example.com"
+    }
+  }
+}
+```
+
+
+##### Fetch All Users
+
+**Query:**
+
+```graphql
+query {
+  users {
+    id
+    name
+    email
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "data": {
+    "users": [
+      {
+        "id": "some-uuid",
+        "name": "John Doe",
+        "email": "john@example.com"
+      }
+    ]
+  }
+}
+```
+
+
+#####  Update a User
+
+Replace `some-uuid` with the actual user ID.
+
+**Mutation:**
+
+```graphql
+mutation {
+  updateUser(
+    id: "some-uuid"
+    name: "John Updated"
+    email: "updated@example.com"
+  ) {
+    id
+    name
+    email
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "data": {
+    "updateUser": {
+      "id": "some-uuid",
+      "name": "John Updated",
+      "email": "updated@example.com"
+    }
+  }
+}
+```
+
+## GraphQL CRUD Operations 
+
+### 1. Introduction
+In this guide, we implement **CRUD (Create, Read, Update, Delete) operations** in **GraphQL** using **Node.js, TypeScript, Apollo Server**, and **MongoDB (Mongoose)**.
+
+---
+
+## **2. Project Setup**
+### **2.1 Initialize Node.js and TypeScript Project**
+- Create a new folder and initialize a Node.js project:
+  ```sh
+  mkdir graphql-crud
+  cd graphql-crud
+  npm init -y
+  ```
+- Install TypeScript and necessary dependencies:
+  ```sh
+  npm install --save-dev typescript ts-node @types/node
+  ```
+- Generate a TypeScript configuration file:
+  ```sh
+  npx tsc --init
+  ```
+
+### **2.2 Install Required Dependencies**
+```sh
+npm install apollo-server-express express graphql mongoose dotenv
+npm install --save-dev @types/express @types/graphql
+```
+
+### **2.3 Create Folder Structure**
+```
+graphql-crud/
+│── graphql/
+│   ├── resolvers.ts
+│   ├── typeDefs.ts
+│── models/
+│   ├── User.ts
+│── .env
+│── index.ts
+│── package.json
+│── tsconfig.json
+```
+
+---
+
+## **3. Setting Up Express and Apollo Server**
+### **3.1 `index.ts` - Main Server File**
+```ts
+import express from "express";
+import { ApolloServer } from "apollo-server-express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import typeDefs from "./graphql/typeDefs";
+import resolvers from "./graphql/resolvers";
+
+dotenv.config();
+
+const app = express();
+
+// Connect to MongoDB
+mongoose
+  .connect(process.env.MONGO_URI || "mongodb://localhost:27017/graphqlCRUD")
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.error("MongoDB Connection Error:", err));
+
+async function startServer() {
+  const server = new ApolloServer({ typeDefs, resolvers });
+  await server.start();
+  server.applyMiddleware({ app });
+
+  app.listen(4000, () => {
+    console.log("Server running on http://localhost:4000/graphql");
+  });
+}
+
+startServer();
+```
+### **Explanation**
+- Initializes an **Express** app.
+- Connects to **MongoDB** using **Mongoose**.
+- Sets up **Apollo Server** for handling **GraphQL requests**.
+- Starts the server on **port 4000**.
+
+---
+
+## **4. Define GraphQL Schema**
+### **4.1 `graphql/typeDefs.ts` - GraphQL Type Definitions**
+```ts
+import { gql } from "apollo-server-express";
+
+const typeDefs = gql`
+  type User {
+    id: ID!
+    name: String!
+    email: String!
+    age: Int
+  }
+
+  type Query {
+    getUsers: [User]
+    getUser(id: ID!): User
+  }
+
+  type Mutation {
+    createUser(name: String!, email: String!, age: Int): User
+    updateUser(id: ID!, name: String, email: String, age: Int): User
+    deleteUser(id: ID!): String
+  }
+`;
+
+export default typeDefs;
+```
+### **Explanation**
+- **`User`** type defines a **User model** with fields **id, name, email, and age**.
+- **Queries**
+  - `getUsers`: Fetches all users.
+  - `getUser(id: ID!)`: Fetches a single user by ID.
+- **Mutations**
+  - `createUser`: Creates a new user.
+  - `updateUser`: Updates an existing user.
+  - `deleteUser`: Deletes a user.
+
+---
+
+## **5. Define Mongoose Model**
+### **5.1 `models/User.ts` - User Model**
+```ts
+import mongoose, { Schema, Document } from "mongoose";
+
+export interface IUser extends Document {
+  name: string;
+  email: string;
+  age?: number;
+}
+
+const UserSchema: Schema = new Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  age: { type: Number, required: false },
+});
+
+export default mongoose.model<IUser>("User", UserSchema);
+```
+### **Explanation**
+- Defines a **Mongoose schema** for the **User** model.
+- Specifies **name, email, and age** fields.
+- Uses **TypeScript interfaces** for type safety.
+
+---
+
+## **6. Implement Resolver Logic**
+### **6.1 `graphql/resolvers.ts` - Resolver Functions**
+```ts
+import User from "../models/User";
+
+const resolvers = {
+  Query: {
+    async getUsers() {
+      return await User.find();
+    },
+    async getUser(_: any, { id }: { id: string }) {
+      return await User.findById(id);
+    },
+  },
+
+  Mutation: {
+    async createUser(_: any, { name, email, age }: { name: string; email: string; age?: number }) {
+      const newUser = new User({ name, email, age });
+      return await newUser.save();
+    },
+    
+    async updateUser(_: any, { id, name, email, age }: { id: string; name?: string; email?: string; age?: number }) {
+      return await User.findByIdAndUpdate(id, { name, email, age }, { new: true });
+    },
+
+    async deleteUser(_: any, { id }: { id: string }) {
+      await User.findByIdAndDelete(id);
+      return "User deleted successfully";
+    },
+  },
+};
+
+export default resolvers;
+```
+### **Explanation**
+- **Queries**
+  - `getUsers()`: Fetches all users from MongoDB.
+  - `getUser(id)`: Fetches a user by ID.
+- **Mutations**
+  - `createUser(name, email, age)`: Creates a new user and saves it in MongoDB.
+  - `updateUser(id, name, email, age)`: Updates an existing user's details.
+  - `deleteUser(id)`: Deletes a user by ID.
+
+---
+
+## **7. Environment Configuration**
+### **7.1 `.env` - MongoDB Connection**
+```
+MONGO_URI=mongodb://localhost:27017/graphqlCRUD
+```
+### **7.2 Load Environment Variables in `index.ts`**
+```ts
+dotenv.config();
+```
+
+---
+
+## **8. Running the Server**
+### **8.1 Add Script in `package.json`**
+```json
+"scripts": {
+  "start": "ts-node index.ts"
+}
+```
+### **8.2 Start the Server**
+```sh
+npm start
+```
+- Server runs at **`http://localhost:4000/graphql`**.
+
+---
+
+## **9. Testing CRUD Operations**
+### **9.1 Create a User**
+```graphql
+mutation {
+  createUser(name: "John Doe", email: "john@example.com", age: 30) {
+    id
+    name
+    email
+  }
+}
+```
+### **9.2 Get All Users**
+```graphql
+query {
+  getUsers {
+    id
+    name
+    email
+  }
+}
+```
+### **9.3 Get a Single User**
+```graphql
+query {
+  getUser(id: "USER_ID_HERE") {
+    name
+    email
+  }
+}
+```
+### **9.4 Update a User**
+```graphql
+mutation {
+  updateUser(id: "USER_ID_HERE", name: "Jane Doe", email: "jane@example.com") {
+    id
+    name
+    email
+  }
+}
+```
+### **9.5 Delete a User**
+```graphql
+mutation {
+  deleteUser(id: "USER_ID_HERE")
+}
+```
+
+---
+
+## **10. Summary**
+✅ **Setup Apollo Server with Express**  
+✅ **Defined GraphQL Schema & Mongoose Models**  
+✅ **Implemented CRUD Operations**  
+✅ **Connected to MongoDB**  
+✅ **Tested CRUD Operations in GraphQL Playground**
+
+---
+
+🎯 **Next Steps**
+- **Authentication** (JWT-based authentication for user login)
+- **Pagination** (Fetch users with limit/offset)
+- **Subscriptions** (Real-time updates using WebSockets)
+
+Let me know if you need additional enhancements! 🚀

@@ -10,3 +10,5 @@ query Query($a: Float!, $b: Float!, $addA2: Float!, $addB2: Float!) {
   add(a: $addA2, b: $addB2)
 }  here how to differ field this ?
 
+
+very good now give me detailed notes for the above code in a structured plan
