@@ -554,20 +554,219 @@ mutation {
 }
 ```
 
----
-
-## **10. Summary**
-✅ **Setup Apollo Server with Express**  
-✅ **Defined GraphQL Schema & Mongoose Models**  
-✅ **Implemented CRUD Operations**  
-✅ **Connected to MongoDB**  
-✅ **Tested CRUD Operations in GraphQL Playground**
+Here’s the **full code** for your GraphQL API in **Node.js with TypeScript and Apollo Server** that demonstrates **query arguments for filtering data**.
 
 ---
 
-🎯 **Next Steps**
-- **Authentication** (JWT-based authentication for user login)
-- **Pagination** (Fetch users with limit/offset)
-- **Subscriptions** (Real-time updates using WebSockets)
+## **1️⃣ Install Dependencies**
+Run the following command to install all necessary packages:
 
-Let me know if you need additional enhancements! 🚀
+```sh
+npm init -y
+npm install apollo-server graphql
+npm install --save-dev @types/graphql @types/node ts-node typescript
+```
+
+---
+
+## **2️⃣ Project Structure**
+```
+/graphql-api
+  ├── /src
+  │   ├── schema.ts
+  │   ├── resolvers.ts
+  │   ├── types.ts
+  │   ├── server.ts
+  ├── package.json
+  ├── tsconfig.json
+```
+
+---
+
+## **3️⃣ Define GraphQL Schema (`schema.ts`)**
+Create a schema that includes query arguments for filtering books.
+
+```ts
+import { gql } from "apollo-server";
+
+export const typeDefs = gql`
+  type Book {
+    id: ID!
+    title: String!
+    author: String!
+  }
+
+  type Query {
+    books(title: String, author: String): [Book]
+  }
+`;
+```
+- Defines a `books` query that takes **optional** `title` and `author` arguments.
+
+---
+
+## **4️⃣ Define TypeScript Types (`types.ts`)**
+This ensures proper type safety in our resolvers.
+
+```ts
+export type Book = {
+  id: string;
+  title: string;
+  author: string;
+};
+
+export type QueryResolvers = {
+  books: (_: any, args: { title?: string; author?: string }) => Book[];
+};
+
+export type Resolvers = {
+  Query: QueryResolvers;
+};
+```
+- **Book Type**: Represents the book data structure.
+- **QueryResolvers**: Defines resolver function types.
+
+---
+
+## **5️⃣ Implement Resolvers (`resolvers.ts`)**
+This file contains the logic to filter books based on query arguments.
+
+```ts
+import { Resolvers } from "./types";
+
+const books = [
+  { id: "1", title: "The Great Gatsby", author: "F. Scott Fitzgerald" },
+  { id: "2", title: "To Kill a Mockingbird", author: "Harper Lee" },
+  { id: "3", title: "1984", author: "George Orwell" },
+];
+
+export const resolvers: Resolvers = {
+  Query: {
+    books: (_, args) => {
+      let result = books;
+
+      if (args.title) {
+        result = result.filter(book =>
+          book.title.toLowerCase().includes(args.title.toLowerCase())
+        );
+      }
+
+      if (args.author) {
+        result = result.filter(book =>
+          book.author.toLowerCase().includes(args.author.toLowerCase())
+        );
+      }
+
+      return result;
+    },
+  },
+};
+```
+- Filters books **dynamically** based on the `title` and `author` arguments.
+
+---
+
+## **6️⃣ Create Apollo Server (`server.ts`)**
+Now, create the Apollo Server and run it.
+
+```ts
+import { ApolloServer } from "apollo-server";
+import { typeDefs } from "./schema";
+import { resolvers } from "./resolvers";
+
+const server = new ApolloServer({ typeDefs, resolvers });
+
+server.listen().then(({ url }) => {
+  console.log(`🚀 Server ready at ${url}`);
+});
+```
+- Starts Apollo Server.
+- Logs the server URL.
+
+---
+
+## **7️⃣ Configure TypeScript (`tsconfig.json`)**
+Create a TypeScript config file to enable TypeScript support.
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "CommonJS",
+    "strict": true,
+    "esModuleInterop": true,
+    "outDir": "./dist"
+  },
+  "include": ["src"]
+}
+```
+
+---
+
+## **8️⃣ Run the GraphQL Server**
+Start the server with:
+
+```sh
+npx ts-node src/server.ts
+```
+
+You should see:
+
+```
+🚀 Server ready at http://localhost:4000
+```
+
+---
+
+## **9️⃣ Test in GraphQL Playground**
+Open [http://localhost:4000](http://localhost:4000) and test queries.
+
+### **Query 1: Get All Books**
+```graphql
+query {
+  books {
+    id
+    title
+    author
+  }
+}
+```
+
+### **Query 2: Filter by Title**
+```graphql
+query {
+  books(title: "1984") {
+    id
+    title
+    author
+  }
+}
+```
+
+### **Query 3: Filter by Author**
+```graphql
+query {
+  books(author: "Harper Lee") {
+    id
+    title
+    author
+  }
+}
+```
+
+---
+
+## **✅ Summary**
+✔ **GraphQL Schema** with arguments (`title`, `author`)  
+✔ **Resolvers** that filter data dynamically  
+✔ **Apollo Server** setup with TypeScript  
+✔ **Test queries in GraphQL Playground**  
+
+---
+
+## **🔥 Next Steps**
+- Integrate with **MongoDB** or **PostgreSQL** for real-time data.
+- Add **pagination** (`limit`, `offset`).
+- Implement **authentication** with JWT.
+
+Let me know if you need more help! 🚀

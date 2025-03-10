@@ -1,45 +1,34 @@
-import User from "../models/User";
+import { Resolvers } from "./types";
 
-const resolvers = {
+const books = [
+  { id: "1", title: "Book1", author: "Auth1" },
+  { id: "2", title: "Book2", author: "Auth2" },
+  { id: "3", title: "Book3", author: "Auth3" },
+];
+
+export const resolvers: Resolvers = {
   Query: {
-    async getUsers() {
-      return await User.find();
-    },
-    async getUser(_: any, { id }: { id: string }) {
-      return await User.findById(id);
-    },
-  },
+    books: (_, args) => {
+      let result = books;
 
-  Mutation: {
-    async createUser(
-      _: any,
-      { name, email, age }: { name: string; email: string; age?: number }
-    ) {
-      const newUser = new User({ name, email, age });
-      return await newUser.save();
-    },
+      if (args.title) {
+        result = result.filter((book) =>
+          book.title.toLowerCase().includes(args.title?.toLowerCase() ?? "")
+        );
+      }
 
-    async updateUser(
-      _: any,
-      {
-        id,
-        name,
-        email,
-        age,
-      }: { id: string; name?: string; email?: string; age?: number }
-    ) {
-      return await User.findByIdAndUpdate(
-        id,
-        { name, email, age },
-        { new: true }
-      );
-    },
+      if (args.author) {
+        result = result.filter((book) =>
+          book.author.toLowerCase().includes(args.author?.toLowerCase() ?? "")
+        );
+      }
+      if (args.id) {
+        result = result.filter((book) =>
+          book.author.toLowerCase().includes(args.id?.toLowerCase() ?? "")
+        );
+      }
 
-    async deleteUser(_: any, { id }: { id: string }) {
-      await User.findByIdAndDelete(id);
-      return "User deleted successfully";
+      return result;
     },
   },
 };
-
-export default resolvers;
