@@ -1,31 +1,25 @@
 import { gql } from "apollo-server";
 
-// Define Enum Type
-const typeDefs = gql`
-  enum Status {
-    PENDING
-    IN_PROGRESS
-    COMPLETED
-  }
-
-  # Union Type: It can be one of the following types
-  union SearchResult = Book | Author
-
-  type Book {
-    id: ID!
-    title: String!
-    author: String!
-  }
-
-  type Author {
-    id: ID!
+// Define the Interface
+export const typeDefs = gql`
+  interface Animal {
     name: String!
+    age: Int!
+  }
+
+  type Dog implements Animal {
+    name: String!
+    age: Int!
+    breed: String!
+  }
+
+  type Cat implements Animal {
+    name: String!
+    age: Int!
+    color: String!
   }
 
   type Query {
-    getStatus: Status
-    search(query: String!): [SearchResult]
+    getAnimals: [Animal!]!
   }
 `;
-
-export default typeDefs;

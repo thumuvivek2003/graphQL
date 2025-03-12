@@ -1,38 +1,32 @@
-const resolvers = {
-  Query: {
-    getStatus: () => {
-      return "PENDING";
-    },
-    search: (_: any, { query }: { query: string }) => {
-      const books = [
-        { id: "1", title: "GraphQL Guide", author: "John Doe" },
-        { id: "2", title: "Learning TypeScript", author: "Jane Smith" },
-      ];
-      const authors = [
-        { id: "1", name: "John Doe" },
-        { id: "2", name: "Jane Smith" },
-      ];
-
-      if (query === "book") {
-        return books;
-      } else if (query === "author") {
-        return authors;
-      }
-      return [];
-    },
-  },
-
-  SearchResult: {
+export const resolvers = {
+  // Resolve the interface Animal
+  Animal: {
     __resolveType(obj: any) {
-      if (obj.title) {
-        return "Book";
+      if (obj.breed) {
+        return "Dog"; // if breed is present, return Dog
       }
-      if (obj.name) {
-        return "Author";
+      if (obj.color) {
+        return "Cat"; // if color is present, return Cat
       }
       return null;
     },
   },
-};
 
-export default resolvers;
+  Query: {
+    getAnimals: () => {
+      // Sample data
+      return [
+        {
+          name: "Buddy",
+          age: 4,
+          breed: "Golden Retriever",
+        },
+        {
+          name: "Whiskers",
+          age: 3,
+          color: "Black",
+        },
+      ];
+    },
+  },
+};
