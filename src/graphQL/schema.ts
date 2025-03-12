@@ -1,19 +1,31 @@
 import { gql } from "apollo-server";
 
-export const typeDefs = gql`
-  scalar Date
-  scalar Email
-  scalar URL
+// Define Enum Type
+const typeDefs = gql`
+  enum Status {
+    PENDING
+    IN_PROGRESS
+    COMPLETED
+  }
+
+  # Union Type: It can be one of the following types
+  union SearchResult = Book | Author
+
+  type Book {
+    id: ID!
+    title: String!
+    author: String!
+  }
+
+  type Author {
+    id: ID!
+    name: String!
+  }
 
   type Query {
-    getDate: Date
-    getEmail: Email
-    getURL: URL
-  }
-
-  type Mutation {
-    setDate(date: Date!): String
-    setEmail(email: Email!): String
-    setURL(url: URL!): String
+    getStatus: Status
+    search(query: String!): [SearchResult]
   }
 `;
+
+export default typeDefs;

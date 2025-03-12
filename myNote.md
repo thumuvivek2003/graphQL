@@ -1602,3 +1602,239 @@ In this example, you've learned how to:
 3. Test and query custom scalar types in a GraphQL API.
 
 This setup can be expanded and adjusted based on your needs for different custom scalar types.
+
+
+## Task 11 : Enum and Unions 
+Great! You're diving into some advanced GraphQL concepts like Enum and Union Types. I'll guide you through how to define and use both of these types in a GraphQL schema using Node.js, Apollo Server, and TypeScript.
+
+### Enum Types
+
+An **Enum** in GraphQL is a special kind of scalar that defines a set of possible values. It is useful when you want to constrain a field to only allow a specific set of values.
+
+### Union Types
+
+A **Union** type in GraphQL allows a field to return one of many different types, but the types don't need to be related in any way. This is useful when you want to return different types of data from a field depending on the query.
+
+### Step-by-Step Code Example
+
+#### 1. Install Dependencies
+
+Before we start, you need to install the following dependencies in your project:
+
+```bash
+npm install apollo-server graphql
+npm install --save-dev typescript @types/node ts-node
+```
+
+- **apollo-server**: Provides the Apollo Server framework to run the GraphQL API.
+- **graphql**: The GraphQL runtime.
+- **typescript**: For TypeScript support.
+- **@types/node**: TypeScript types for Node.js.
+- **ts-node**: Allows you to run TypeScript code directly without compiling.
+
+#### 2. Create Your TypeScript Configuration File (`tsconfig.json`)
+
+Create a `tsconfig.json` file for TypeScript configuration:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*.ts"]
+}
+```
+
+#### 3. Create the GraphQL Schema (`schema.ts`)
+
+Now, let's define the **Enum** and **Union** types in your GraphQL schema.
+
+```typescript
+import { gql } from 'apollo-server';
+
+// Define Enum Type
+const typeDefs = gql`
+  enum Status {
+    PENDING
+    IN_PROGRESS
+    COMPLETED
+  }
+
+  # Union Type: It can be one of the following types
+  union SearchResult = Book | Author
+
+  type Book {
+    id: ID!
+    title: String!
+    author: String!
+  }
+
+  type Author {
+    id: ID!
+    name: String!
+  }
+
+  type Query {
+    getStatus: Status
+    search(query: String!): [SearchResult]
+  }
+`;
+
+export default typeDefs;
+```
+
+### Explanation:
+- **Enum Type `Status`**: This restricts the `Status` to only three possible values: `PENDING`, `IN_PROGRESS`, and `COMPLETED`.
+- **Union Type `SearchResult`**: This allows a field (`search`) to return either a `Book` or an `Author` depending on the query result.
+- **`Book` and `Author`**: These are two separate types that can be returned in the `SearchResult` union type.
+
+#### 4. Create Resolvers (`resolvers.ts`)
+
+Resolvers are where we define how the data for our schema fields should be fetched or resolved.
+
+```typescript
+const resolvers = {
+  Query: {
+    getStatus: () => {
+      return 'PENDING'; // Returns a value from the Status enum
+    },
+    search: (_: any, { query }: { query: string }) => {
+      // Example search function, returns different data based on the query.
+      const books = [
+        { id: '1', title: 'GraphQL Guide', author: 'John Doe' },
+        { id: '2', title: 'Learning TypeScript', author: 'Jane Smith' },
+      ];
+      const authors = [
+        { id: '1', name: 'John Doe' },
+        { id: '2', name: 'Jane Smith' },
+      ];
+
+      if (query === 'book') {
+        return books;
+      } else if (query === 'author') {
+        return authors;
+      }
+      return [];
+    },
+  },
+  // This is a Union resolver. It tells Apollo how to resolve the union types.
+  SearchResult: {
+    __resolveType(obj: any) {
+      if (obj.title) {
+        return 'Book'; // Return Book type
+      }
+      if (obj.name) {
+        return 'Author'; // Return Author type
+      }
+      return null; // For undefined cases
+    },
+  },
+};
+
+export default resolvers;
+```
+
+### Explanation:
+- **Resolvers for `Query`**: 
+  - `getStatus` returns one of the values defined in the `Status` enum (`PENDING`, `IN_PROGRESS`, or `COMPLETED`).
+  - `search` performs a mock search based on the input query. If the query is "book", it returns a list of books; if it's "author", it returns a list of authors.
+- **Union Resolver**: The `__resolveType` function tells Apollo Server how to resolve which type (either `Book` or `Author`) is returned based on the data. If the object has a `title`, it’s resolved as a `Book`, and if it has a `name`, it’s resolved as an `Author`.
+
+#### 5. Set Up Apollo Server (`index.ts`)
+
+Now, let's set up the Apollo Server to serve your GraphQL API.
+
+```typescript
+import { ApolloServer } from 'apollo-server';
+import typeDefs from './schema';
+import resolvers from './resolvers';
+
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+});
+
+server.listen().then(({ url }) => {
+  console.log(`Server ready at ${url}`);
+});
+```
+
+### Explanation:
+- The `ApolloServer` is instantiated with the `typeDefs` (GraphQL schema) and `resolvers` (logic for resolving the schema fields).
+- The server will listen for requests and provide an endpoint where you can access your GraphQL API.
+
+#### 6. Run the Server
+
+Now that we’ve set up everything, you can run your Apollo Server using the following command:
+
+```bash
+npx ts-node src/index.ts
+```
+
+### Example Queries
+
+- **Query the Enum Type (`getStatus`)**:
+
+```graphql
+query {
+  getStatus
+}
+```
+
+This will return one of the enum values, like:
+
+```json
+{
+  "data": {
+    "getStatus": "PENDING"
+  }
+}
+```
+
+- **Search for Books or Authors (`search`)**:
+
+```graphql
+query {
+  search(query: "book") {
+    ... on Book {
+      title
+      author
+    }
+    ... on Author {
+      name
+    }
+  }
+}
+```
+
+This will return either a list of `Book` objects or `Author` objects, depending on the query:
+
+```json
+{
+  "data": {
+    "search": [
+      {
+        "title": "GraphQL Guide",
+        "author": "John Doe"
+      },
+      {
+        "title": "Learning TypeScript",
+        "author": "Jane Smith"
+      }
+    ]
+  }
+}
+```
+
+#### 7. Final Notes:
+- **Enum Types**: You define a limited set of possible values that can be used in your GraphQL API.
+- **Union Types**: These are useful when a field can return more than one possible type, and you need to resolve which type is returned dynamically based on the data.
+
+This should give you a solid foundation for working with **Enum** and **Union** types in GraphQL with Apollo Server and TypeScript.
