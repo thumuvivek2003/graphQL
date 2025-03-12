@@ -1,7 +1,7 @@
 I want to learn graphQl in node js - so give me a table of 30 having having colum id , project like task name , learning outcomes , task description convering all concepts of Graph QL - give me all practically work 
 
 
-Hi, i am learning graph ql in which i am doing task {paste} so explain how to do this in node js typescript apollo
+Hi, i am learning graph ql in which i am doing task {paste} so explain how to do this in node js typescript apollo fully code and explain clearly 
 
 okay i want to addition substraction and multiplication resolvers took 2 numbers a and b 
 
@@ -12,3 +12,5 @@ query Query($a: Float!, $b: Float!, $addA2: Float!, $addB2: Float!) {
 
 
 very good now give me detailed notes for the above code in a structured plan
+
+Hi, for react if i want to do applications task like things i simply create a folder for that and in that folder only i include all folder with inde and that index is used in app - but now i am doing backend - especially learning graphql - can i do same approach here also how ?

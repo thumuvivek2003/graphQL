@@ -1,28 +1,19 @@
 import { gql } from "apollo-server";
 
 export const typeDefs = gql`
-  type User {
-    id: ID!
-    name: String!
-    posts: [Post!]!
-  }
-
-  type Post {
-    id: ID!
-    title: String!
-    content: String!
-    user: User!
-  }
+  scalar Date
+  scalar Email
+  scalar URL
 
   type Query {
-    getUsers: [User!]!
-    getUser(id: ID!): User
-    getPosts: [Post!]!
-    getPost(id: ID!): Post
+    getDate: Date
+    getEmail: Email
+    getURL: URL
   }
 
   type Mutation {
-    createUser(name: String!): User!
-    createPost(title: String!, content: String!, userId: ID!): Post!
+    setDate(date: Date!): String
+    setEmail(email: Email!): String
+    setURL(url: URL!): String
   }
 `;
