@@ -31,14 +31,15 @@
 | 29     | Deployment of GraphQL Server                | Deployment, Hosting                                                                              | Deploy the GraphQL server to cloud services (Heroku, AWS, or DigitalOcean), configure environment variables, and optimize for production use.                                     |
 | 30     | Project Capstone                            | End-to-End GraphQL Application                                                                   | Build an end-to-end GraphQL app integrating authentication, authorization, database storage, file uploads, subscriptions, schema federation, testing, monitoring, and deployment. |
 
-
 ### GraphQL Mutations
+
 #### What is Mutation ?
-GraphQL mutations allow you to modify data (add, update, delete) in an API. 
+
+GraphQL mutations allow you to modify data (add, update, delete) in an API.
 In this guide, we will implement basic mutations.
 
-
 #### Steps
+
 1. Define GraphQL Schema
 2. Implement Resolvers
 
@@ -49,6 +50,7 @@ GraphQL schemas define the data structure and operations available in the API.
 - For creating schema - Create a `schema.ts` file, which defines the types, queries, and mutations.
 
 ##### Code
+
 ```ts
 import { gql } from "apollo-server";
 
@@ -145,6 +147,7 @@ export const resolvers = {
 ---
 
 #### Set Up Apollo Server
+
 Now, we will configure **Apollo Server** to handle GraphQL requests.
 
 ##### Create a `server.ts` File
@@ -169,7 +172,6 @@ server.listen().then(({ url }) => {
 - Creates an **Apollo Server** instance.
 - Starts the server and logs the URL.
 
-
 #### Run the Server
 
 Start the TypeScript server using:
@@ -184,8 +186,8 @@ You should see:
 🚀 Server ready at http://localhost:4000
 ```
 
-
 #### Testing Mutations in GraphQL Playground
+
 Once the server is running, open GraphQL Playground at:
 
 👉 http://localhost:4000
@@ -218,7 +220,6 @@ mutation {
 }
 ```
 
-
 ##### Fetch All Users
 
 **Query:**
@@ -249,8 +250,7 @@ query {
 }
 ```
 
-
-#####  Update a User
+##### Update a User
 
 Replace `some-uuid` with the actual user ID.
 
@@ -284,15 +284,18 @@ mutation {
 }
 ```
 
-## GraphQL CRUD Operations 
+## GraphQL CRUD Operations
 
 ### 1. Introduction
+
 In this guide, we implement **CRUD (Create, Read, Update, Delete) operations** in **GraphQL** using **Node.js, TypeScript, Apollo Server**, and **MongoDB (Mongoose)**.
 
 ---
 
 ## **2. Project Setup**
+
 ### **2.1 Initialize Node.js and TypeScript Project**
+
 - Create a new folder and initialize a Node.js project:
   ```sh
   mkdir graphql-crud
@@ -309,12 +312,14 @@ In this guide, we implement **CRUD (Create, Read, Update, Delete) operations** i
   ```
 
 ### **2.2 Install Required Dependencies**
+
 ```sh
 npm install apollo-server-express express graphql mongoose dotenv
 npm install --save-dev @types/express @types/graphql
 ```
 
 ### **2.3 Create Folder Structure**
+
 ```
 graphql-crud/
 │── graphql/
@@ -331,7 +336,9 @@ graphql-crud/
 ---
 
 ## **3. Setting Up Express and Apollo Server**
+
 ### **3.1 `index.ts` - Main Server File**
+
 ```ts
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
@@ -362,7 +369,9 @@ async function startServer() {
 
 startServer();
 ```
+
 ### **Explanation**
+
 - Initializes an **Express** app.
 - Connects to **MongoDB** using **Mongoose**.
 - Sets up **Apollo Server** for handling **GraphQL requests**.
@@ -371,7 +380,9 @@ startServer();
 ---
 
 ## **4. Define GraphQL Schema**
+
 ### **4.1 `graphql/typeDefs.ts` - GraphQL Type Definitions**
+
 ```ts
 import { gql } from "apollo-server-express";
 
@@ -397,7 +408,9 @@ const typeDefs = gql`
 
 export default typeDefs;
 ```
+
 ### **Explanation**
+
 - **`User`** type defines a **User model** with fields **id, name, email, and age**.
 - **Queries**
   - `getUsers`: Fetches all users.
@@ -410,7 +423,9 @@ export default typeDefs;
 ---
 
 ## **5. Define Mongoose Model**
+
 ### **5.1 `models/User.ts` - User Model**
+
 ```ts
 import mongoose, { Schema, Document } from "mongoose";
 
@@ -428,7 +443,9 @@ const UserSchema: Schema = new Schema({
 
 export default mongoose.model<IUser>("User", UserSchema);
 ```
+
 ### **Explanation**
+
 - Defines a **Mongoose schema** for the **User** model.
 - Specifies **name, email, and age** fields.
 - Uses **TypeScript interfaces** for type safety.
@@ -436,7 +453,9 @@ export default mongoose.model<IUser>("User", UserSchema);
 ---
 
 ## **6. Implement Resolver Logic**
+
 ### **6.1 `graphql/resolvers.ts` - Resolver Functions**
+
 ```ts
 import User from "../models/User";
 
@@ -451,13 +470,28 @@ const resolvers = {
   },
 
   Mutation: {
-    async createUser(_: any, { name, email, age }: { name: string; email: string; age?: number }) {
+    async createUser(
+      _: any,
+      { name, email, age }: { name: string; email: string; age?: number }
+    ) {
       const newUser = new User({ name, email, age });
       return await newUser.save();
     },
-    
-    async updateUser(_: any, { id, name, email, age }: { id: string; name?: string; email?: string; age?: number }) {
-      return await User.findByIdAndUpdate(id, { name, email, age }, { new: true });
+
+    async updateUser(
+      _: any,
+      {
+        id,
+        name,
+        email,
+        age,
+      }: { id: string; name?: string; email?: string; age?: number }
+    ) {
+      return await User.findByIdAndUpdate(
+        id,
+        { name, email, age },
+        { new: true }
+      );
     },
 
     async deleteUser(_: any, { id }: { id: string }) {
@@ -469,7 +503,9 @@ const resolvers = {
 
 export default resolvers;
 ```
+
 ### **Explanation**
+
 - **Queries**
   - `getUsers()`: Fetches all users from MongoDB.
   - `getUser(id)`: Fetches a user by ID.
@@ -481,11 +517,15 @@ export default resolvers;
 ---
 
 ## **7. Environment Configuration**
+
 ### **7.1 `.env` - MongoDB Connection**
+
 ```
 MONGO_URI=mongodb://localhost:27017/graphqlCRUD
 ```
+
 ### **7.2 Load Environment Variables in `index.ts`**
+
 ```ts
 dotenv.config();
 ```
@@ -493,22 +533,29 @@ dotenv.config();
 ---
 
 ## **8. Running the Server**
+
 ### **8.1 Add Script in `package.json`**
+
 ```json
 "scripts": {
   "start": "ts-node index.ts"
 }
 ```
+
 ### **8.2 Start the Server**
+
 ```sh
 npm start
 ```
+
 - Server runs at **`http://localhost:4000/graphql`**.
 
 ---
 
 ## **9. Testing CRUD Operations**
+
 ### **9.1 Create a User**
+
 ```graphql
 mutation {
   createUser(name: "John Doe", email: "john@example.com", age: 30) {
@@ -518,7 +565,9 @@ mutation {
   }
 }
 ```
+
 ### **9.2 Get All Users**
+
 ```graphql
 query {
   getUsers {
@@ -528,7 +577,9 @@ query {
   }
 }
 ```
+
 ### **9.3 Get a Single User**
+
 ```graphql
 query {
   getUser(id: "USER_ID_HERE") {
@@ -537,7 +588,9 @@ query {
   }
 }
 ```
+
 ### **9.4 Update a User**
+
 ```graphql
 mutation {
   updateUser(id: "USER_ID_HERE", name: "Jane Doe", email: "jane@example.com") {
@@ -547,7 +600,9 @@ mutation {
   }
 }
 ```
+
 ### **9.5 Delete a User**
+
 ```graphql
 mutation {
   deleteUser(id: "USER_ID_HERE")
@@ -559,6 +614,7 @@ Here’s the **full code** for your GraphQL API in **Node.js with TypeScript and
 ---
 
 ## **1️⃣ Install Dependencies**
+
 Run the following command to install all necessary packages:
 
 ```sh
@@ -570,6 +626,7 @@ npm install --save-dev @types/graphql @types/node ts-node typescript
 ---
 
 ## **2️⃣ Project Structure**
+
 ```
 /graphql-api
   ├── /src
@@ -584,6 +641,7 @@ npm install --save-dev @types/graphql @types/node ts-node typescript
 ---
 
 ## **3️⃣ Define GraphQL Schema (`schema.ts`)**
+
 Create a schema that includes query arguments for filtering books.
 
 ```ts
@@ -601,11 +659,13 @@ export const typeDefs = gql`
   }
 `;
 ```
+
 - Defines a `books` query that takes **optional** `title` and `author` arguments.
 
 ---
 
 ## **4️⃣ Define TypeScript Types (`types.ts`)**
+
 This ensures proper type safety in our resolvers.
 
 ```ts
@@ -623,12 +683,14 @@ export type Resolvers = {
   Query: QueryResolvers;
 };
 ```
+
 - **Book Type**: Represents the book data structure.
 - **QueryResolvers**: Defines resolver function types.
 
 ---
 
 ## **5️⃣ Implement Resolvers (`resolvers.ts`)**
+
 This file contains the logic to filter books based on query arguments.
 
 ```ts
@@ -646,13 +708,13 @@ export const resolvers: Resolvers = {
       let result = books;
 
       if (args.title) {
-        result = result.filter(book =>
+        result = result.filter((book) =>
           book.title.toLowerCase().includes(args.title.toLowerCase())
         );
       }
 
       if (args.author) {
-        result = result.filter(book =>
+        result = result.filter((book) =>
           book.author.toLowerCase().includes(args.author.toLowerCase())
         );
       }
@@ -662,11 +724,13 @@ export const resolvers: Resolvers = {
   },
 };
 ```
+
 - Filters books **dynamically** based on the `title` and `author` arguments.
 
 ---
 
 ## **6️⃣ Create Apollo Server (`server.ts`)**
+
 Now, create the Apollo Server and run it.
 
 ```ts
@@ -680,12 +744,14 @@ server.listen().then(({ url }) => {
   console.log(`🚀 Server ready at ${url}`);
 });
 ```
+
 - Starts Apollo Server.
 - Logs the server URL.
 
 ---
 
 ## **7️⃣ Configure TypeScript (`tsconfig.json`)**
+
 Create a TypeScript config file to enable TypeScript support.
 
 ```json
@@ -704,6 +770,7 @@ Create a TypeScript config file to enable TypeScript support.
 ---
 
 ## **8️⃣ Run the GraphQL Server**
+
 Start the server with:
 
 ```sh
@@ -719,9 +786,11 @@ You should see:
 ---
 
 ## **9️⃣ Test in GraphQL Playground**
+
 Open [http://localhost:4000](http://localhost:4000) and test queries.
 
 ### **Query 1: Get All Books**
+
 ```graphql
 query {
   books {
@@ -733,6 +802,7 @@ query {
 ```
 
 ### **Query 2: Filter by Title**
+
 ```graphql
 query {
   books(title: "1984") {
@@ -744,6 +814,7 @@ query {
 ```
 
 ### **Query 3: Filter by Author**
+
 ```graphql
 query {
   books(author: "Harper Lee") {
@@ -757,25 +828,28 @@ query {
 ---
 
 ## **✅ Summary**
+
 ✔ **GraphQL Schema** with arguments (`title`, `author`)  
 ✔ **Resolvers** that filter data dynamically  
 ✔ **Apollo Server** setup with TypeScript  
-✔ **Test queries in GraphQL Playground**  
+✔ **Test queries in GraphQL Playground**
 
 ---
 
 ## **🔥 Next Steps**
+
 - Integrate with **MongoDB** or **PostgreSQL** for real-time data.
 - Add **pagination** (`limit`, `offset`).
 - Implement **authentication** with JWT.
 
 Let me know if you need more help! 🚀
 
-### If we want or gate 
+### If we want or gate
 
 To use **OR (`||`)** instead of **AND (`&&`)** while filtering books, update your resolver logic like this:
 
 ### **Updated Resolvers (`resolvers.ts`)**
+
 ```ts
 import { Resolvers } from "./types";
 
@@ -803,6 +877,7 @@ export const resolvers: Resolvers = {
 ```
 
 ### **Changes Made:**
+
 1. Used `.filter()` only **once** and applied the `OR` (`||`) condition inside it.
 2. Now, if **any** of the conditions match (`id`, `title`, or `author`), the book is **included** in the result.
 3. Ensured it checks for **each argument separately**.
@@ -810,7 +885,9 @@ export const resolvers: Resolvers = {
 ---
 
 ### **Example Queries & Results**
+
 #### **Query 1: Find by Title OR Author**
+
 ```graphql
 query {
   books(title: "1984", author: "Harper Lee") {
@@ -820,7 +897,9 @@ query {
   }
 }
 ```
+
 **Returns:**
+
 ```json
 [
   {
@@ -837,6 +916,7 @@ query {
 ```
 
 #### **Query 2: Find by ID OR Title**
+
 ```graphql
 query {
   books(id: "1", title: "Mockingbird") {
@@ -846,7 +926,9 @@ query {
   }
 }
 ```
+
 **Returns:**
+
 ```json
 [
   {
@@ -861,30 +943,34 @@ query {
   }
 ]
 ```
+
 ---
 
 ### **✅ Summary**
+
 ✔ **Uses OR (`||`) logic** instead of AND (`&&`).  
 ✔ **Filters books based on `id`, `title`, or `author`** independently.  
-✔ **Returns books if at least one condition matches.**  
+✔ **Returns books if at least one condition matches.**
 
 Let me know if you need any changes! 🚀
-
 
 Great! Optimizing GraphQL queries using **Aliases** and **Fragments** in a **Node.js TypeScript Apollo Server** setup involves structuring your queries to be more efficient and reusable.
 
 ---
 
 ## **1. Understanding Aliases and Fragments**
+
 - **Aliases:** Help rename fields in the response to prevent conflicts when querying the same field multiple times with different arguments.
 - **Fragments:** Allow reusability by defining shared parts of a query.
 
 ---
 
 ## **2. Setting Up GraphQL with Apollo Server in Node.js and TypeScript**
+
 If you haven’t already set up Apollo Server with TypeScript, follow these steps:
 
 ### **Install dependencies**
+
 ```sh
 npm init -y
 npm install apollo-server graphql
@@ -892,6 +978,7 @@ npm install --save-dev @types/graphql
 ```
 
 ### **Create an Apollo Server**
+
 Create a file **`server.ts`**:
 
 ```typescript
@@ -921,7 +1008,8 @@ const users = [
 // Define Resolvers
 const resolvers = {
   Query: {
-    getUser: (_: any, { id }: { id: string }) => users.find((user) => user.id === id),
+    getUser: (_: any, { id }: { id: string }) =>
+      users.find((user) => user.id === id),
     allUsers: () => users,
   },
 };
@@ -937,9 +1025,11 @@ server.listen().then(({ url }) => {
 ---
 
 ## **3. Using GraphQL Aliases**
+
 Aliases help rename fields when querying the same field multiple times with different arguments.
 
 ### **Example Query Using Aliases**
+
 ```graphql
 query {
   alice: getUser(id: "1") {
@@ -954,6 +1044,7 @@ query {
 ```
 
 ### **Response**
+
 ```json
 {
   "data": {
@@ -968,16 +1059,20 @@ query {
   }
 }
 ```
-**💡 Benefits:**  
+
+**💡 Benefits:**
+
 - Avoids conflicts when querying the same field multiple times.
 - Helps rename fields in a meaningful way.
 
 ---
 
 ## **4. Using GraphQL Fragments**
+
 Fragments allow reusing query structures across multiple queries.
 
 ### **Defining a Fragment**
+
 ```graphql
 query {
   allUsers {
@@ -993,6 +1088,7 @@ fragment UserDetails on User {
 ```
 
 ### **Response**
+
 ```json
 {
   "data": {
@@ -1012,16 +1108,19 @@ fragment UserDetails on User {
 }
 ```
 
-**💡 Benefits:**  
+**💡 Benefits:**
+
 - Reduces query repetition.
 - Makes queries cleaner and more modular.
 
 ---
 
 ## **5. Combining Aliases and Fragments**
+
 You can use both together to optimize complex queries.
 
 ### **Example Query**
+
 ```graphql
 query {
   alice: getUser(id: "1") {
@@ -1040,6 +1139,7 @@ fragment UserDetails on User {
 ```
 
 ### **Response**
+
 ```json
 {
   "data": {
@@ -1060,6 +1160,7 @@ fragment UserDetails on User {
 ---
 
 ## **6. Running the Server and Testing Queries**
+
 1. Run the Apollo Server:
    ```sh
    npx ts-node server.ts
@@ -1069,18 +1170,20 @@ fragment UserDetails on User {
 ---
 
 ## **7. Best Practices for GraphQL Optimization**
+
 ✅ Use **Aliases** to avoid conflicts when querying the same field with different parameters.  
 ✅ Use **Fragments** to create reusable parts of queries.  
 ✅ Optimize **Resolvers** to avoid over-fetching data.  
-✅ Use **Batching and Caching** (e.g., DataLoader) for performance improvement.  
-
+✅ Use **Batching and Caching** (e.g., DataLoader) for performance improvement.
 
 ### GraphQL Nested Queries
+
 Since you want to use **MongoDB** instead of mock data, we will modify our implementation to fetch users and posts from a **MongoDB database**.
 
 ---
 
 ## **1. Install Dependencies**
+
 Run the following command to install the necessary packages:
 
 ```sh
@@ -1091,6 +1194,7 @@ npm install --save-dev typescript ts-node nodemon @types/node
 ---
 
 ## **2. Set Up MongoDB Connection**
+
 Create a `.env` file to store your **MongoDB connection string**:
 
 ```env
@@ -1100,6 +1204,7 @@ MONGO_URI=mongodb://localhost:27017/graphql_db
 Now, create a **database connection file**.
 
 ### **Create `db.ts`**
+
 ```ts
 import mongoose from "mongoose";
 import dotenv from "dotenv";
@@ -1120,9 +1225,11 @@ export const connectDB = async () => {
 ---
 
 ## **3. Define MongoDB Models**
+
 Instead of mock data, we will now use **MongoDB schemas** for Users and Posts.
 
 ### **Create `models/User.ts`**
+
 ```ts
 import mongoose from "mongoose";
 
@@ -1136,6 +1243,7 @@ export const UserModel = mongoose.model("User", UserSchema);
 ---
 
 ### **Create `models/Post.ts`**
+
 ```ts
 import mongoose from "mongoose";
 
@@ -1151,9 +1259,11 @@ export const PostModel = mongoose.model("Post", PostSchema);
 ---
 
 ## **4. Define GraphQL Schema**
+
 We define the schema using **SDL**.
 
 ### **Create `schema.ts`**
+
 ```ts
 import { gql } from "apollo-server";
 
@@ -1188,9 +1298,11 @@ export const typeDefs = gql`
 ---
 
 ## **5. Define Resolvers**
+
 Now, we create resolvers that **fetch data from MongoDB** instead of using mock data.
 
 ### **Create `resolvers.ts`**
+
 ```ts
 import { UserModel } from "./models/User";
 import { PostModel } from "./models/Post";
@@ -1198,9 +1310,11 @@ import { PostModel } from "./models/Post";
 export const resolvers = {
   Query: {
     getUsers: async () => await UserModel.find(),
-    getUser: async (_: any, { id }: { id: string }) => await UserModel.findById(id),
+    getUser: async (_: any, { id }: { id: string }) =>
+      await UserModel.findById(id),
     getPosts: async () => await PostModel.find(),
-    getPost: async (_: any, { id }: { id: string }) => await PostModel.findById(id),
+    getPost: async (_: any, { id }: { id: string }) =>
+      await PostModel.findById(id),
   },
 
   User: {
@@ -1216,7 +1330,14 @@ export const resolvers = {
       const newUser = new UserModel({ name });
       return await newUser.save();
     },
-    createPost: async (_: any, { title, content, userId }: { title: string, content: string, userId: string }) => {
+    createPost: async (
+      _: any,
+      {
+        title,
+        content,
+        userId,
+      }: { title: string; content: string; userId: string }
+    ) => {
       const newPost = new PostModel({ title, content, userId });
       return await newPost.save();
     },
@@ -1227,9 +1348,11 @@ export const resolvers = {
 ---
 
 ## **6. Set Up Apollo Server**
+
 Now, set up **Apollo Server** with MongoDB.
 
 ### **Create `index.ts`**
+
 ```ts
 import { ApolloServer } from "apollo-server";
 import { typeDefs } from "./schema";
@@ -1252,6 +1375,7 @@ startServer();
 ---
 
 ## **7. Run the Server**
+
 Make sure MongoDB is running on your local machine. Then, start the server:
 
 ```sh
@@ -1267,9 +1391,11 @@ mongod --dbpath /data/db
 ---
 
 ## **8. Test Queries in GraphQL Playground**
+
 Go to **http://localhost:4000** and run the following queries.
 
 ### **Create a User**
+
 ```graphql
 mutation {
   createUser(name: "Alice") {
@@ -1280,18 +1406,25 @@ mutation {
 ```
 
 ### **Create a Post**
+
 ```graphql
 mutation {
-  createPost(title: "GraphQL Basics", content: "Introduction to GraphQL", userId: "USER_ID_HERE") {
+  createPost(
+    title: "GraphQL Basics"
+    content: "Introduction to GraphQL"
+    userId: "USER_ID_HERE"
+  ) {
     id
     title
     content
   }
 }
 ```
+
 Replace `"USER_ID_HERE"` with the actual `id` of the user created earlier.
 
 ### **Fetch Users and Their Posts**
+
 ```graphql
 query {
   getUsers {
@@ -1307,6 +1440,7 @@ query {
 ```
 
 ### **Fetch Posts and Their Users**
+
 ```graphql
 query {
   getPosts {
@@ -1324,14 +1458,15 @@ query {
 ---
 
 ## **Summary**
+
 ✅ **Connected MongoDB to GraphQL using Mongoose**  
 ✅ **Created `User` and `Post` models**  
 ✅ **Implemented resolvers that fetch data from the database**  
 ✅ **Handled nested queries for `User.posts` and `Post.user`**  
-✅ **Added `Mutation` to create users and posts**  
+✅ **Added `Mutation` to create users and posts**
 
+## Task 10
 
-## Task 10 
 To create and integrate custom scalar types (e.g., `Date`, `Email`, `URL`) in GraphQL with Node.js, TypeScript, and Apollo Server, you'll need to follow these steps:
 
 ### 1. Set up the Project
@@ -1339,6 +1474,7 @@ To create and integrate custom scalar types (e.g., `Date`, `Email`, `URL`) in Gr
 Start by setting up a Node.js project with TypeScript and Apollo Server.
 
 #### Step 1: Initialize the Project
+
 ```bash
 mkdir graphql-custom-scalars
 cd graphql-custom-scalars
@@ -1346,19 +1482,24 @@ npm init -y
 ```
 
 #### Step 2: Install Dependencies
+
 Install Apollo Server, GraphQL, TypeScript, and other necessary libraries.
+
 ```bash
 npm install apollo-server graphql
 npm install --save-dev typescript @types/node ts-node
 ```
 
 #### Step 3: Create the `tsconfig.json` file
+
 Generate a `tsconfig.json` for TypeScript configuration:
+
 ```bash
 npx tsc --init
 ```
 
 Update the `tsconfig.json` file to match the following configuration for better compatibility:
+
 ```json
 {
   "compilerOptions": {
@@ -1382,27 +1523,28 @@ In GraphQL, custom scalars allow you to define custom data types that don't exis
 ### 3. Code Example for Custom Scalars
 
 #### Step 1: Create a `scalars.ts` file
+
 This file will define the custom scalar types (`Date`, `Email`, and `URL`).
 
 ```typescript
-import { GraphQLScalarType, Kind } from 'graphql';
+import { GraphQLScalarType, Kind } from "graphql";
 
 // Custom scalar for Date
 export const DateScalar = new GraphQLScalarType({
-  name: 'Date',
-  description: 'Custom scalar type for Date',
+  name: "Date",
+  description: "Custom scalar type for Date",
   serialize(value: any) {
     if (value instanceof Date) {
       return value.toISOString(); // Convert Date to ISO string for JSON response
     }
-    throw new Error('Invalid Date');
+    throw new Error("Invalid Date");
   },
   parseValue(value: any) {
     const date = new Date(value);
     if (!isNaN(date.getTime())) {
       return date; // Parse ISO string into Date object
     }
-    throw new Error('Invalid Date');
+    throw new Error("Invalid Date");
   },
   parseLiteral(ast) {
     if (ast.kind === Kind.STRING) {
@@ -1411,27 +1553,27 @@ export const DateScalar = new GraphQLScalarType({
         return date; // Parse ISO string into Date object
       }
     }
-    throw new Error('Invalid Date');
-  }
+    throw new Error("Invalid Date");
+  },
 });
 
 // Custom scalar for Email
 export const EmailScalar = new GraphQLScalarType({
-  name: 'Email',
-  description: 'Custom scalar type for Email',
+  name: "Email",
+  description: "Custom scalar type for Email",
   serialize(value: any) {
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (typeof value === 'string' && emailRegex.test(value)) {
+    if (typeof value === "string" && emailRegex.test(value)) {
       return value;
     }
-    throw new Error('Invalid Email');
+    throw new Error("Invalid Email");
   },
   parseValue(value: any) {
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (typeof value === 'string' && emailRegex.test(value)) {
+    if (typeof value === "string" && emailRegex.test(value)) {
       return value;
     }
-    throw new Error('Invalid Email');
+    throw new Error("Invalid Email");
   },
   parseLiteral(ast) {
     if (ast.kind === Kind.STRING) {
@@ -1440,20 +1582,20 @@ export const EmailScalar = new GraphQLScalarType({
         return ast.value;
       }
     }
-    throw new Error('Invalid Email');
-  }
+    throw new Error("Invalid Email");
+  },
 });
 
 // Custom scalar for URL
 export const URLScalar = new GraphQLScalarType({
-  name: 'URL',
-  description: 'Custom scalar type for URL',
+  name: "URL",
+  description: "Custom scalar type for URL",
   serialize(value: any) {
     try {
       const url = new URL(value);
       return url.toString(); // Return the URL string
     } catch (err) {
-      throw new Error('Invalid URL');
+      throw new Error("Invalid URL");
     }
   },
   parseValue(value: any) {
@@ -1461,7 +1603,7 @@ export const URLScalar = new GraphQLScalarType({
       const url = new URL(value);
       return url; // Return the URL object
     } catch (err) {
-      throw new Error('Invalid URL');
+      throw new Error("Invalid URL");
     }
   },
   parseLiteral(ast) {
@@ -1470,11 +1612,11 @@ export const URLScalar = new GraphQLScalarType({
         const url = new URL(ast.value);
         return url; // Return the URL object
       } catch (err) {
-        throw new Error('Invalid URL');
+        throw new Error("Invalid URL");
       }
     }
-    throw new Error('Invalid URL');
-  }
+    throw new Error("Invalid URL");
+  },
 });
 ```
 
@@ -1487,7 +1629,7 @@ export const URLScalar = new GraphQLScalarType({
 In the `schema.ts` file, define your GraphQL schema, including the custom scalars and types.
 
 ```typescript
-import { gql } from 'apollo-server';
+import { gql } from "apollo-server";
 
 // Define the GraphQL schema
 export const typeDefs = gql`
@@ -1517,9 +1659,9 @@ export const typeDefs = gql`
 Create an `index.ts` file where you'll set up the Apollo Server and integrate the custom scalars.
 
 ```typescript
-import { ApolloServer } from 'apollo-server';
-import { typeDefs } from './schema';
-import { DateScalar, EmailScalar, URLScalar } from './scalars';
+import { ApolloServer } from "apollo-server";
+import { typeDefs } from "./schema";
+import { DateScalar, EmailScalar, URLScalar } from "./scalars";
 
 // Define the resolvers
 const resolvers = {
@@ -1529,21 +1671,23 @@ const resolvers = {
 
   Query: {
     getDate: () => new Date(),
-    getEmail: () => 'example@example.com',
-    getURL: () => 'https://www.example.com'
+    getEmail: () => "example@example.com",
+    getURL: () => "https://www.example.com",
   },
 
   Mutation: {
-    setDate: (_: any, { date }: { date: Date }) => `Received Date: ${date.toISOString()}`,
-    setEmail: (_: any, { email }: { email: string }) => `Received Email: ${email}`,
-    setURL: (_: any, { url }: { url: string }) => `Received URL: ${url}`
-  }
+    setDate: (_: any, { date }: { date: Date }) =>
+      `Received Date: ${date.toISOString()}`,
+    setEmail: (_: any, { email }: { email: string }) =>
+      `Received Email: ${email}`,
+    setURL: (_: any, { url }: { url: string }) => `Received URL: ${url}`,
+  },
 };
 
 // Create and start the Apollo Server
 const server = new ApolloServer({
   typeDefs,
-  resolvers
+  resolvers,
 });
 
 server.listen(4000).then(({ url }) => {
@@ -1576,6 +1720,7 @@ The server will start, and you can test it in a GraphQL playground (accessible a
 You can now test the GraphQL API using the following queries and mutations:
 
 #### Query Example
+
 ```graphql
 query {
   getDate
@@ -1585,6 +1730,7 @@ query {
 ```
 
 #### Mutation Example
+
 ```graphql
 mutation {
   setDate(date: "2025-03-12T12:00:00Z")
@@ -1603,8 +1749,8 @@ In this example, you've learned how to:
 
 This setup can be expanded and adjusted based on your needs for different custom scalar types.
 
+## Task 11 : Enum and Unions
 
-## Task 11 : Enum and Unions 
 Great! You're diving into some advanced GraphQL concepts like Enum and Union Types. I'll guide you through how to define and use both of these types in a GraphQL schema using Node.js, Apollo Server, and TypeScript.
 
 ### Enum Types
@@ -1657,7 +1803,7 @@ Create a `tsconfig.json` file for TypeScript configuration:
 Now, let's define the **Enum** and **Union** types in your GraphQL schema.
 
 ```typescript
-import { gql } from 'apollo-server';
+import { gql } from "apollo-server";
 
 // Define Enum Type
 const typeDefs = gql`
@@ -1691,6 +1837,7 @@ export default typeDefs;
 ```
 
 ### Explanation:
+
 - **Enum Type `Status`**: This restricts the `Status` to only three possible values: `PENDING`, `IN_PROGRESS`, and `COMPLETED`.
 - **Union Type `SearchResult`**: This allows a field (`search`) to return either a `Book` or an `Author` depending on the query result.
 - **`Book` and `Author`**: These are two separate types that can be returned in the `SearchResult` union type.
@@ -1703,22 +1850,22 @@ Resolvers are where we define how the data for our schema fields should be fetch
 const resolvers = {
   Query: {
     getStatus: () => {
-      return 'PENDING'; // Returns a value from the Status enum
+      return "PENDING"; // Returns a value from the Status enum
     },
     search: (_: any, { query }: { query: string }) => {
       // Example search function, returns different data based on the query.
       const books = [
-        { id: '1', title: 'GraphQL Guide', author: 'John Doe' },
-        { id: '2', title: 'Learning TypeScript', author: 'Jane Smith' },
+        { id: "1", title: "GraphQL Guide", author: "John Doe" },
+        { id: "2", title: "Learning TypeScript", author: "Jane Smith" },
       ];
       const authors = [
-        { id: '1', name: 'John Doe' },
-        { id: '2', name: 'Jane Smith' },
+        { id: "1", name: "John Doe" },
+        { id: "2", name: "Jane Smith" },
       ];
 
-      if (query === 'book') {
+      if (query === "book") {
         return books;
-      } else if (query === 'author') {
+      } else if (query === "author") {
         return authors;
       }
       return [];
@@ -1728,10 +1875,10 @@ const resolvers = {
   SearchResult: {
     __resolveType(obj: any) {
       if (obj.title) {
-        return 'Book'; // Return Book type
+        return "Book"; // Return Book type
       }
       if (obj.name) {
-        return 'Author'; // Return Author type
+        return "Author"; // Return Author type
       }
       return null; // For undefined cases
     },
@@ -1742,7 +1889,8 @@ export default resolvers;
 ```
 
 ### Explanation:
-- **Resolvers for `Query`**: 
+
+- **Resolvers for `Query`**:
   - `getStatus` returns one of the values defined in the `Status` enum (`PENDING`, `IN_PROGRESS`, or `COMPLETED`).
   - `search` performs a mock search based on the input query. If the query is "book", it returns a list of books; if it's "author", it returns a list of authors.
 - **Union Resolver**: The `__resolveType` function tells Apollo Server how to resolve which type (either `Book` or `Author`) is returned based on the data. If the object has a `title`, it’s resolved as a `Book`, and if it has a `name`, it’s resolved as an `Author`.
@@ -1752,9 +1900,9 @@ export default resolvers;
 Now, let's set up the Apollo Server to serve your GraphQL API.
 
 ```typescript
-import { ApolloServer } from 'apollo-server';
-import typeDefs from './schema';
-import resolvers from './resolvers';
+import { ApolloServer } from "apollo-server";
+import typeDefs from "./schema";
+import resolvers from "./resolvers";
 
 const server = new ApolloServer({
   typeDefs,
@@ -1767,6 +1915,7 @@ server.listen().then(({ url }) => {
 ```
 
 ### Explanation:
+
 - The `ApolloServer` is instantiated with the `typeDefs` (GraphQL schema) and `resolvers` (logic for resolving the schema fields).
 - The server will listen for requests and provide an endpoint where you can access your GraphQL API.
 
@@ -1834,13 +1983,14 @@ This will return either a list of `Book` objects or `Author` objects, depending 
 ```
 
 #### 7. Final Notes:
+
 - **Enum Types**: You define a limited set of possible values that can be used in your GraphQL API.
 - **Union Types**: These are useful when a field can return more than one possible type, and you need to resolve which type is returned dynamically based on the data.
 
 This should give you a solid foundation for working with **Enum** and **Union** types in GraphQL with Apollo Server and TypeScript.
 
+## Task 12
 
-## Task 12 
 Sure! Let's go over how to implement **Interfaces in GraphQL** in Node.js with TypeScript using Apollo Server. We'll cover:
 
 - What is an interface in GraphQL.
@@ -1903,7 +2053,7 @@ Ensure the `tsconfig.json` file looks like this (ensure `esModuleInterop` and `s
 Now, create a file `src/schema.ts` to define the GraphQL schema, types, and interfaces.
 
 ```typescript
-import { gql } from 'apollo-server';
+import { gql } from "apollo-server";
 
 // Define the Interface
 export const typeDefs = gql`
@@ -1940,10 +2090,10 @@ export const resolvers = {
   Animal: {
     __resolveType(obj: any) {
       if (obj.breed) {
-        return 'Dog'; // if breed is present, return Dog
+        return "Dog"; // if breed is present, return Dog
       }
       if (obj.color) {
-        return 'Cat'; // if color is present, return Cat
+        return "Cat"; // if color is present, return Cat
       }
       return null;
     },
@@ -1954,14 +2104,14 @@ export const resolvers = {
       // Sample data
       return [
         {
-          name: 'Buddy',
+          name: "Buddy",
           age: 4,
-          breed: 'Golden Retriever',
+          breed: "Golden Retriever",
         },
         {
-          name: 'Whiskers',
+          name: "Whiskers",
           age: 3,
-          color: 'Black',
+          color: "Black",
         },
       ];
     },
@@ -1974,9 +2124,9 @@ export const resolvers = {
 Create a file `src/index.ts` to set up the Apollo Server and integrate it with the schema and resolvers.
 
 ```typescript
-import { ApolloServer } from 'apollo-server';
-import { typeDefs } from './schema';
-import { resolvers } from './resolvers';
+import { ApolloServer } from "apollo-server";
+import { typeDefs } from "./schema";
+import { resolvers } from "./resolvers";
 
 const server = new ApolloServer({
   typeDefs,
@@ -2064,8 +2214,8 @@ In this implementation:
 
 This allows you to abstract common fields (like `name` and `age`) while still having specific fields (`breed`, `color`) for different types. The interface ensures that all types implementing it share common fields, making your schema more reusable and structured.
 
+## Where to use
 
-## Where to use 
 The use of **Interfaces** in GraphQL can be very powerful, especially when you want to share common fields between different types but also allow for type-specific fields. This is particularly useful in cases where your GraphQL schema involves multiple types that share certain common properties, but also need their own unique fields.
 
 Let’s break down some real-world scenarios where you might want to use **Interfaces** in GraphQL, as illustrated in the example with `Animal`, `Dog`, and `Cat`.
@@ -2075,6 +2225,7 @@ Let’s break down some real-world scenarios where you might want to use **Inter
 In real-world applications, you often have different types of entities that share common attributes but have their own specific properties. GraphQL interfaces help you create queries that are flexible and can return data from multiple types while ensuring consistency in the fields that are common across them.
 
 #### Use Case:
+
 Imagine you're building an application that fetches information about different animals (e.g., pets or wildlife). Each animal has a common set of attributes like `name` and `age`, but different animal species may have different attributes. For example:
 
 - **Dog** has a `breed`.
@@ -2083,6 +2234,7 @@ Imagine you're building an application that fetches information about different 
 You can use an interface to define the common fields (`name` and `age`) while allowing each specific type (`Dog`, `Cat`) to add its own unique attributes (`breed`, `color`).
 
 #### Why Use an Interface:
+
 - **Abstracting Common Fields**: The `Animal` interface abstracts away the `name` and `age` fields so that you don't have to define them in every type like `Dog` and `Cat`.
 - **Flexible Queries**: With an interface, you can define a unified query (`getAnimals`) that returns animals, regardless of whether they are dogs, cats, or other types. The result is a list of animals that share common fields (like `name` and `age`), but you can use inline fragments (`... on Dog`, `... on Cat`) to access type-specific fields (`breed`, `color`).
 
@@ -2091,6 +2243,7 @@ You can use an interface to define the common fields (`name` and `age`) while al
 Imagine you're building an **e-commerce platform** that sells different types of products. Each product type shares some common fields (like `id`, `name`, `price`), but they also have product-specific fields.
 
 #### Use Case:
+
 You might have different product types, like:
 
 - **Electronics**: These might have a `warrantyPeriod`.
@@ -2100,6 +2253,7 @@ You might have different product types, like:
 In this case, the `Product` interface can define the common fields (`id`, `name`, `price`), and the specific product types (`Electronics`, `Clothing`, `Furniture`) can implement this interface and add their own unique fields.
 
 #### GraphQL Schema Example:
+
 ```graphql
 interface Product {
   id: ID!
@@ -2136,6 +2290,7 @@ type Query {
 ```
 
 #### Why Use an Interface:
+
 - **Avoid Redundant Field Definitions**: You don't need to repeat the common fields (`id`, `name`, `price`) for each product type. The `Product` interface abstracts that.
 - **Unified Query**: A single `getProducts` query will return all product types (electronics, clothing, furniture), and clients can request common fields and use inline fragments to fetch type-specific fields.
 - **Scalability**: As new product types are added (e.g., `Books`, `Toys`), you don’t need to modify the entire query structure—just define the new product types implementing the `Product` interface.
@@ -2145,6 +2300,7 @@ type Query {
 In a **Content Management System (CMS)**, content items like `Articles`, `Blogs`, and `News` may share certain fields (like `title`, `author`, `publishedDate`), but each type may also have additional specific fields.
 
 #### Use Case:
+
 You might have content items like:
 
 - **Article**: Has a `category` and `tags`.
@@ -2152,6 +2308,7 @@ You might have content items like:
 - **News**: Has a `source` and `location`.
 
 #### Why Use an Interface:
+
 - **Data Consistency**: The common fields (`title`, `author`, `publishedDate`) are abstracted in the `Content` interface, reducing duplication across content types.
 - **Efficient Queries**: You can query all content types in one go using `getContents`, while also using inline fragments to access type-specific fields. This can be helpful for rendering the right content in the UI.
 
@@ -2160,6 +2317,7 @@ You might have content items like:
 Polymorphism is a concept where different object types are treated as instances of the same interface or base class. GraphQL interfaces support polymorphism by allowing you to return different types that implement the same interface.
 
 #### Use Case:
+
 In a **social media platform**, you could have posts with multiple types:
 
 - **TextPost**: Contains `content` (text).
@@ -2169,6 +2327,7 @@ In a **social media platform**, you could have posts with multiple types:
 You could define a `Post` interface that ensures all posts share common fields (`id`, `author`, `timestamp`), but each post type can add its own unique fields.
 
 #### GraphQL Schema Example:
+
 ```graphql
 interface Post {
   id: ID!
@@ -2205,6 +2364,7 @@ type Query {
 ```
 
 #### Why Use an Interface:
+
 - **Abstract Common Fields**: The `Post` interface ensures all posts have the same fields (`id`, `author`, `timestamp`).
 - **Return Mixed Types**: The `getPosts` query can return an array of mixed post types (text, image, video). Using inline fragments in queries allows clients to request type-specific fields based on the actual post type (`content`, `imageUrl`, `videoUrl`).
 
@@ -2213,7 +2373,6 @@ type Query {
 Here’s a quick summary of scenarios where interfaces are useful in GraphQL:
 
 1. **Unified Queries for Multiple Types**: When you have multiple types with some shared fields, but each type also has its own unique fields. You can query them all using a single unified query.
-   
 2. **Abstracting Common Fields**: When several types share common fields but you don’t want to repeat those fields in every type definition. Interfaces help define common fields centrally.
 
 3. **Polymorphism**: When you need to treat different object types as instances of the same base type, but each type has additional fields. This is often useful in complex systems like content management or e-commerce.
@@ -2222,8 +2381,8 @@ Here’s a quick summary of scenarios where interfaces are useful in GraphQL:
 
 Interfaces make GraphQL schemas more modular, reusable, and maintainable, while also allowing flexibility for handling different object types that share a common contract.
 
+## Types of resolving
 
-## Types of resolving 
 Great question! Let's dive deeper into how the **resolvers** work with interfaces in GraphQL and whether you need to use `if` statements or conditionals like in the first example.
 
 ### Resolving Types in GraphQL Interfaces
@@ -2237,16 +2396,17 @@ In the previous example, I used an `if-else` statement in the `__resolveType` fu
 The method used in the first example checks which fields exist on the object and returns the appropriate type. Here’s the same example with the `if-else` statements for clarity:
 
 #### Example (First Approach - with `if-else`):
+
 ```typescript
 export const resolvers = {
   Animal: {
     // __resolveType tells GraphQL which type to resolve based on the data received
     __resolveType(obj: any) {
       if (obj.breed) {
-        return 'Dog'; // if the object has the 'breed' field, it must be a 'Dog'
+        return "Dog"; // if the object has the 'breed' field, it must be a 'Dog'
       }
       if (obj.color) {
-        return 'Cat'; // if the object has the 'color' field, it must be a 'Cat'
+        return "Cat"; // if the object has the 'color' field, it must be a 'Cat'
       }
       return null; // if no matching fields, return null (this shouldn't happen if your data is correct)
     },
@@ -2255,8 +2415,8 @@ export const resolvers = {
   Query: {
     getAnimals: () => {
       return [
-        { name: 'Buddy', age: 4, breed: 'Golden Retriever' },
-        { name: 'Whiskers', age: 3, color: 'Black' },
+        { name: "Buddy", age: 4, breed: "Golden Retriever" },
+        { name: "Whiskers", age: 3, color: "Black" },
       ];
     },
   },
@@ -2264,9 +2424,10 @@ export const resolvers = {
 ```
 
 ### Explanation of the `__resolveType` Method:
+
 - `__resolveType` is a function where you can check the fields of the object and return the appropriate GraphQL type.
 - **`if-else` or other conditionals** are used to inspect which fields are available on the object and then map it to the corresponding type (`Dog`, `Cat`, etc.).
-  
+
 This method is necessary when you have to decide dynamically which type to resolve based on the data returned from the database or API.
 
 ### Option 2: Using Type Guards or Helper Functions (Avoiding `if-else` directly)
@@ -2274,15 +2435,16 @@ This method is necessary when you have to decide dynamically which type to resol
 While `if-else` is straightforward and effective for small applications, in larger systems, it can get messy. In those cases, you might want to abstract your type resolution logic into helper functions or use **type guards** to make the code more maintainable and readable.
 
 #### Example (Abstracting Type Resolution Logic):
+
 ```typescript
 export const resolvers = {
   Animal: {
     __resolveType(obj: any) {
       if (isDog(obj)) {
-        return 'Dog';
+        return "Dog";
       }
       if (isCat(obj)) {
-        return 'Cat';
+        return "Cat";
       }
       return null;
     },
@@ -2291,8 +2453,8 @@ export const resolvers = {
   Query: {
     getAnimals: () => {
       return [
-        { name: 'Buddy', age: 4, breed: 'Golden Retriever' },
-        { name: 'Whiskers', age: 3, color: 'Black' },
+        { name: "Buddy", age: 4, breed: "Golden Retriever" },
+        { name: "Whiskers", age: 3, color: "Black" },
       ];
     },
   },
@@ -2309,6 +2471,7 @@ function isCat(obj: any): obj is { color: string } {
 ```
 
 ### Explanation:
+
 - **Type Guards**: We created `isDog` and `isCat` functions. These functions check if an object has a specific field (`breed` for `Dog`, `color` for `Cat`). This is more scalable and readable than using `if-else` directly.
 - **Avoiding Complex Logic**: As your types grow and become more complex, this kind of abstraction can make your code cleaner and easier to maintain.
 
@@ -2324,8 +2487,8 @@ For example, if all your types have a fixed structure and you don’t need to di
 export const resolvers = {
   Query: {
     getAnimals: () => [
-      { name: 'Buddy', age: 4, breed: 'Golden Retriever' },
-      { name: 'Whiskers', age: 3, color: 'Black' },
+      { name: "Buddy", age: 4, breed: "Golden Retriever" },
+      { name: "Whiskers", age: 3, color: "Black" },
     ],
   },
 };
@@ -2338,6 +2501,7 @@ In this example, we don't need `__resolveType` because the types are self-explan
 In some cases, instead of using interfaces, you might choose to use **union types**. A union type is a more flexible way of defining multiple possible types for a field. Unlike an interface, a union type doesn't require implementing common fields—it simply allows the field to be one of several types.
 
 #### Example (Using a Union Type):
+
 ```graphql
 union Animal = Dog | Cat
 
@@ -2364,18 +2528,18 @@ In this case, you can resolve a union type without needing `__resolveType`, beca
 export const resolvers = {
   Query: {
     getAnimals: () => [
-      { name: 'Buddy', age: 4, breed: 'Golden Retriever' },
-      { name: 'Whiskers', age: 3, color: 'Black' },
+      { name: "Buddy", age: 4, breed: "Golden Retriever" },
+      { name: "Whiskers", age: 3, color: "Black" },
     ],
   },
 
   Animal: {
     __resolveType(obj: any) {
       if (obj.breed) {
-        return 'Dog';
+        return "Dog";
       }
       if (obj.color) {
-        return 'Cat';
+        return "Cat";
       }
       return null;
     },
@@ -2388,19 +2552,18 @@ export const resolvers = {
 - **Yes, You Need `__resolveType`**:
   - When you have **interface-based polymorphism** where you need to dynamically resolve types based on the shape of the data (e.g., distinguishing between `Dog` and `Cat`).
   - This is common when the fields vary between types (e.g., `breed` vs. `color`), and you can't know the type upfront.
-  
 - **No, You Don’t Always Need `if-else`**:
   - If your types have clear, predictable fields, you can use **type guards** or helper functions to keep the resolver code clean.
   - For static types or schemas where the types don’t need complex resolution, GraphQL may handle type resolution for you.
 
 Using `if-else` statements is not inherently bad, but for larger schemas with many types, you should consider abstracting the logic into helper functions or type guards. This will make your code cleaner, more maintainable, and easier to scale.
 
-
-
 ## Task 13
+
 Great to hear you're learning GraphQL and want to dive into input types in mutations! Let me guide you through how to implement this in a Node.js project using TypeScript, Apollo Server, and MongoDB.
 
 ### Overview of What We'll Cover:
+
 1. **GraphQL Input Types**: Input types are used in mutations to pass data as arguments. They improve the readability and structure of your GraphQL API.
 2. **Apollo Server**: For handling the GraphQL server.
 3. **MongoDB**: We'll use MongoDB to store data.
@@ -2409,6 +2572,7 @@ Great to hear you're learning GraphQL and want to dive into input types in mutat
 ---
 
 ### Step 1: Initialize the Project
+
 First, initialize a Node.js project with the following command:
 
 ```bash
@@ -2418,6 +2582,7 @@ npm init -y
 ```
 
 ### Step 2: Install Dependencies
+
 Install the necessary dependencies:
 
 ```bash
@@ -2426,6 +2591,7 @@ npm install typescript @types/node @types/graphql @types/mongoose ts-node
 ```
 
 ### Step 3: Set Up TypeScript Configuration
+
 Create a `tsconfig.json` file to configure TypeScript:
 
 ```json
@@ -2444,6 +2610,7 @@ Create a `tsconfig.json` file to configure TypeScript:
 ```
 
 ### Step 4: Create Folder Structure
+
 Now, create the following folder structure for organization:
 
 ```
@@ -2456,6 +2623,7 @@ Now, create the following folder structure for organization:
 ```
 
 ### Step 5: Define the MongoDB Model
+
 In the `/src/models` folder, create a file called `UserModel.ts` to define the MongoDB schema.
 
 ```typescript
@@ -2483,11 +2651,12 @@ export { User, IUser };
 ```
 
 ### Step 6: Create the GraphQL Input Type and Schema
+
 In `/src/schemas`, create the file `userSchema.ts` to define the GraphQL schema.
 
 ```typescript
 // src/schemas/userSchema.ts
-import { gql } from 'apollo-server';
+import { gql } from "apollo-server";
 
 const typeDefs = gql`
   # Define GraphQL Input Type
@@ -2515,6 +2684,7 @@ export { typeDefs };
 ```
 
 ### Step 7: Create the Resolver for Mutations
+
 In `/src/resolvers`, create a `userResolver.ts` to define the mutation logic:
 
 ```typescript
@@ -2524,7 +2694,10 @@ import { IResolvers } from "apollo-server";
 
 const resolvers: IResolvers = {
   Mutation: {
-    addUser: async (_: any, { input }: { input: { name: string; email: string; age: number } }) => {
+    addUser: async (
+      _: any,
+      { input }: { input: { name: string; email: string; age: number } }
+    ) => {
       // Create new user using the input data
       const user = new User({
         name: input.name,
@@ -2544,6 +2717,7 @@ export { resolvers };
 ```
 
 ### Step 8: Set Up Apollo Server and MongoDB Connection
+
 In the `index.ts` file, connect to MongoDB and set up the Apollo Server:
 
 ```typescript
@@ -2578,6 +2752,7 @@ mongoose
 ```
 
 ### Step 9: Run the Server
+
 To run the server, use the following command:
 
 ```bash
@@ -2587,6 +2762,7 @@ npx ts-node src/index.ts
 This will start the Apollo Server on `http://localhost:4000`. You can test your mutation in a GraphQL playground like Apollo Studio or Postman.
 
 ### Example Mutation Query
+
 You can test the mutation like this:
 
 ```graphql
@@ -2601,8 +2777,8 @@ mutation {
 ```
 
 ### Explanation of the Code:
+
 1. **GraphQL Input Type (`UserInput`)**: The `UserInput` type is defined in the GraphQL schema to define the structure of the data being sent in the mutation. This improves code readability and ensures that the data is structured consistently.
-   
 2. **User Model (`UserModel.ts`)**: This is the Mongoose model for MongoDB. It defines the schema for storing user data (name, email, and age).
 
 3. **Mutation (`addUser`)**: This mutation takes an input object of type `UserInput` and adds a new user to the MongoDB database. This is done in the `addUser` resolver function.
@@ -2612,22 +2788,24 @@ mutation {
 ---
 
 ### Conclusion:
+
 By using GraphQL input types, we've structured the mutation arguments cleanly and enforced consistency in how data is passed into the GraphQL API. The use of TypeScript ensures strong typing and error handling, making it easier to maintain the project as it grows.
 
 Let me know if you have any questions or need further clarification!
 
 If no atleast one query present GraphQL returns error:
- Error happens because GraphQL schemas require a Query type by default, even if you only use mutations. The fix is to define an empty or minimal Query type, as shown above. After adding this, your server should run correctly. Let me know if you encounter any other issues!
+Error happens because GraphQL schemas require a Query type by default, even if you only use mutations. The fix is to define an empty or minimal Query type, as shown above. After adding this, your server should run correctly. Let me know if you encounter any other issues!
 
+## Task 14
 
- ## Task 14 
- To implement error handling in GraphQL with Node.js, TypeScript, and Apollo Server, you'll need to structure your resolvers and schema in a way that handles errors gracefully and returns meaningful error messages to clients. I'll walk you through the steps with an example code.
+To implement error handling in GraphQL with Node.js, TypeScript, and Apollo Server, you'll need to structure your resolvers and schema in a way that handles errors gracefully and returns meaningful error messages to clients. I'll walk you through the steps with an example code.
 
 ### Step 1: Set up your project
 
 First, you need to set up a Node.js project with Apollo Server and TypeScript. If you haven't set up the project yet, here’s how to get started:
 
 1. **Initialize a new Node.js project:**
+
    ```bash
    mkdir graphql-error-handling
    cd graphql-error-handling
@@ -2635,12 +2813,14 @@ First, you need to set up a Node.js project with Apollo Server and TypeScript. I
    ```
 
 2. **Install the necessary dependencies:**
+
    ```bash
    npm install apollo-server graphql
    npm install typescript @types/node ts-node --save-dev
    ```
 
 3. **Initialize TypeScript:**
+
    ```bash
    npx tsc --init
    ```
@@ -2660,7 +2840,7 @@ First, you need to set up a Node.js project with Apollo Server and TypeScript. I
 In the `schema.ts` file, you define the GraphQL schema for your app. In this example, we'll create a simple schema for handling users and an error scenario:
 
 ```typescript
-import { gql } from 'apollo-server';
+import { gql } from "apollo-server";
 
 // Define the GraphQL schema
 export const typeDefs = gql`
@@ -2690,13 +2870,13 @@ export const typeDefs = gql`
 In the `resolvers.ts` file, we handle the logic for resolving queries and managing errors. We’ll simulate an error by not finding a user based on their ID.
 
 ```typescript
-import { IResolvers } from 'apollo-server';
-import { User } from './types';  // Define types for User
+import { IResolvers } from "apollo-server";
+import { User } from "./types"; // Define types for User
 
 // Sample data for demonstration
 const users: User[] = [
-  { id: '1', name: 'Alice', email: 'alice@example.com' },
-  { id: '2', name: 'Bob', email: 'bob@example.com' },
+  { id: "1", name: "Alice", email: "alice@example.com" },
+  { id: "2", name: "Bob", email: "bob@example.com" },
 ];
 
 // Resolver functions
@@ -2707,7 +2887,7 @@ export const resolvers: IResolvers = {
         const user = users.find((user) => user.id === id);
         if (!user) {
           // Throwing an error when the user is not found
-          throw new Error('User not found');
+          throw new Error("User not found");
         }
         return user;
       } catch (error) {
@@ -2724,9 +2904,9 @@ export const resolvers: IResolvers = {
 Now, let’s wire up the schema and resolvers in the `index.ts` file and configure Apollo Server.
 
 ```typescript
-import { ApolloServer } from 'apollo-server';
-import { typeDefs } from './schema';
-import { resolvers } from './resolvers';
+import { ApolloServer } from "apollo-server";
+import { typeDefs } from "./schema";
+import { resolvers } from "./resolvers";
 
 const server = new ApolloServer({
   typeDefs,
@@ -2758,6 +2938,7 @@ In GraphQL, it's essential to return meaningful error messages and statuses. Her
 3. Instead of sending a generic error, we return an object with a custom message (e.g., "User not found").
 
 You can further enhance error handling by:
+
 - Returning error codes, like `404` for not found, or `500` for server errors.
 - Using Apollo Server's `formatError` to ensure a consistent error structure.
 
@@ -2846,3 +3027,276 @@ In this guide, we covered how to set up GraphQL with Apollo Server and Node.js/T
 3. Using Apollo’s `formatError` method to customize the error response format globally.
 
 This approach helps you manage errors effectively, providing useful feedback to clients and ensuring that your API behaves consistently.
+
+## Task 15 :
+
+To implement GraphQL directives like `@include`, `@skip`, and custom directives in Node.js with Apollo Server and TypeScript, you'll need to follow a few key steps. Let’s break it down.
+
+### 1. **Set up Apollo Server with TypeScript**
+
+Before diving into directives, make sure you have Apollo Server and TypeScript set up.
+
+### Install dependencies:
+
+```bash
+npm install apollo-server graphql
+npm install --save-dev typescript @types/node ts-node
+```
+
+### Create a basic setup
+
+Let's start with a basic Apollo Server setup in TypeScript.
+
+**Directory Structure:**
+
+```
+/src
+  /directives
+    - directives.ts
+  - schema.ts
+  - resolvers.ts
+  - server.ts
+  - tsconfig.json
+```
+
+#### tsconfig.json (for TypeScript configuration)
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "baseUrl": "./src"
+  },
+  "include": ["src/**/*.ts"]
+}
+```
+
+#### server.ts (Apollo Server Setup)
+
+```typescript
+import { ApolloServer, gql } from "apollo-server";
+import { typeDefs } from "./schema";
+import { resolvers } from "./resolvers";
+import { myDirectives } from "./directives";
+
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  schemaDirectives: myDirectives,
+});
+
+server.listen(4000).then(({ url }) => {
+  console.log(`Server ready at ${url}`);
+});
+```
+
+### 2. **GraphQL Schema and Directives**
+
+In GraphQL, directives like `@include` and `@skip` are used to control query execution.
+
+#### schema.ts
+
+```typescript
+import { gql } from "apollo-server";
+
+export const typeDefs = gql`
+  directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+  directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+  # Custom directive example
+  directive @uppercase on FIELD_DEFINITION
+
+  type Query {
+    hello(name: String!): String @uppercase
+    info: String
+  }
+`;
+```
+
+### 3. **Resolvers**
+
+Resolvers are the heart of the GraphQL schema. Here’s how you can implement them, including how a custom directive like `@uppercase` works.
+
+#### resolvers.ts
+
+```typescript
+export const resolvers = {
+  Query: {
+    hello: (_: any, { name }: { name: string }) => {
+      return `Hello, ${name}!`;
+    },
+    info: () => "This is a sample GraphQL API",
+  },
+};
+```
+
+### 4. **Creating the Directives**
+
+GraphQL directives allow you to modify how fields are resolved, so you can implement custom behavior. Apollo Server provides an easy way to implement them using `SchemaDirectiveVisitor`.
+
+#### directives.ts
+
+Here, we will define the `@uppercase` directive and use built-in ones (`@include`, `@skip`):
+
+```typescript
+import { SchemaDirectiveVisitor } from "graphql-tools";
+import { GraphQLString } from "graphql";
+import { defaultFieldResolver } from "graphql";
+
+// Custom directive to convert the text to uppercase
+class UppercaseDirective extends SchemaDirectiveVisitor {
+  visitFieldDefinition(field: any) {
+    const { resolve = defaultFieldResolver } = field;
+    field.resolve = async function (...args: any[]) {
+      const result = await resolve.apply(this, args);
+      return typeof result === "string" ? result.toUpperCase() : result;
+    };
+  }
+}
+
+// You can use built-in GraphQL directives (@include and @skip) directly without any custom implementation.
+// These are automatically handled by Apollo Server.
+
+export const myDirectives = {
+  uppercase: UppercaseDirective,
+};
+```
+
+### 5. **Using the Directives in GraphQL Queries**
+
+#### Example GraphQL Query
+
+Here’s an example showing how to use the built-in `@include`, `@skip`, and the custom `@uppercase` directive in a query.
+
+```graphql
+query {
+  hello(name: "John") @uppercase
+  info
+}
+```
+
+- `@uppercase` will modify the result of the `hello` field and return it in uppercase.
+- The `@include(if: Boolean!)` directive can be used to conditionally include a field in the query result.
+- The `@skip(if: Boolean!)` directive works similarly but will conditionally skip a field.
+
+For example:
+
+```graphql
+query {
+  hello(name: "Alice") @uppercase
+  info @skip(if: true)
+}
+```
+
+- `hello(name: "Alice")` will return `"HELLO, ALICE!"` because of the `@uppercase` directive.
+- `info` will not be included in the result because of the `@skip(if: true)` directive.
+
+### 6. **Final Touches**
+
+Now that everything is set up:
+
+1. You have the Apollo Server running with TypeScript.
+2. Your custom directive (`@uppercase`) is implemented.
+3. The built-in directives (`@include`, `@skip`) are also supported by default in Apollo Server.
+
+### Full Code Example:
+
+**server.ts**:
+
+```typescript
+import { ApolloServer } from "apollo-server";
+import { typeDefs } from "./schema";
+import { resolvers } from "./resolvers";
+import { myDirectives } from "./directives";
+
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  schemaDirectives: myDirectives,
+});
+
+server.listen(4000).then(({ url }) => {
+  console.log(`Server ready at ${url}`);
+});
+```
+
+**schema.ts**:
+
+```typescript
+import { gql } from "apollo-server";
+
+export const typeDefs = gql`
+  directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+  directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+  directive @uppercase on FIELD_DEFINITION
+
+  type Query {
+    hello(name: String!): String @uppercase
+    info: String
+  }
+`;
+```
+
+**resolvers.ts**:
+
+```typescript
+export const resolvers = {
+  Query: {
+    hello: (_: any, { name }: { name: string }) => {
+      return `Hello, ${name}!`;
+    },
+    info: () => "This is a sample GraphQL API",
+  },
+};
+```
+
+**directives.ts**:
+
+```typescript
+import { SchemaDirectiveVisitor } from "graphql-tools";
+import { GraphQLString } from "graphql";
+import { defaultFieldResolver } from "graphql";
+
+// Custom directive to convert the text to uppercase
+class UppercaseDirective extends SchemaDirectiveVisitor {
+  visitFieldDefinition(field: any) {
+    const { resolve = defaultFieldResolver } = field;
+    field.resolve = async function (...args: any[]) {
+      const result = await resolve.apply(this, args);
+      return typeof result === "string" ? result.toUpperCase() : result;
+    };
+  }
+}
+
+export const myDirectives = {
+  uppercase: UppercaseDirective,
+};
+```
+
+### Running the Server:
+
+To run the server:
+
+1. Compile the TypeScript code:
+
+   ```bash
+   npx tsc
+   ```
+
+2. Run the server using Node.js:
+   ```bash
+   node dist/server.js
+   ```
+
+Your GraphQL server will be running on `http://localhost:4000`, and you can now test your directives through queries.
+
+### Conclusion:
+
+You now have a fully functional GraphQL server that supports both built-in directives (`@include`, `@skip`) and a custom directive (`@uppercase`). With this setup, you can further extend and build custom directives to fit the specific needs of your application.
