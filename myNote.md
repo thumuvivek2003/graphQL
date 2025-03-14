@@ -2618,3 +2618,231 @@ Let me know if you have any questions or need further clarification!
 
 If no atleast one query present GraphQL returns error:
  Error happens because GraphQL schemas require a Query type by default, even if you only use mutations. The fix is to define an empty or minimal Query type, as shown above. After adding this, your server should run correctly. Let me know if you encounter any other issues!
+
+
+ ## Task 14 
+ To implement error handling in GraphQL with Node.js, TypeScript, and Apollo Server, you'll need to structure your resolvers and schema in a way that handles errors gracefully and returns meaningful error messages to clients. I'll walk you through the steps with an example code.
+
+### Step 1: Set up your project
+
+First, you need to set up a Node.js project with Apollo Server and TypeScript. If you haven't set up the project yet, here’s how to get started:
+
+1. **Initialize a new Node.js project:**
+   ```bash
+   mkdir graphql-error-handling
+   cd graphql-error-handling
+   npm init -y
+   ```
+
+2. **Install the necessary dependencies:**
+   ```bash
+   npm install apollo-server graphql
+   npm install typescript @types/node ts-node --save-dev
+   ```
+
+3. **Initialize TypeScript:**
+   ```bash
+   npx tsc --init
+   ```
+
+4. **Create the following file structure:**
+   ```
+   graphql-error-handling/
+   ├── src/
+   │   ├── resolvers.ts
+   │   ├── schema.ts
+   │   └── index.ts
+   └── tsconfig.json
+   ```
+
+### Step 2: Define the GraphQL Schema
+
+In the `schema.ts` file, you define the GraphQL schema for your app. In this example, we'll create a simple schema for handling users and an error scenario:
+
+```typescript
+import { gql } from 'apollo-server';
+
+// Define the GraphQL schema
+export const typeDefs = gql`
+  type Query {
+    getUser(id: ID!): User
+  }
+
+  type User {
+    id: ID!
+    name: String!
+    email: String!
+  }
+
+  type Error {
+    message: String!
+  }
+
+  union UserResult = User | Error
+`;
+```
+
+- Here, we have a `User` type and a `Query` to fetch a user by ID.
+- We've also defined a `UserResult` union type that can either be a `User` or an `Error`, allowing us to handle error responses gracefully.
+
+### Step 3: Create Resolvers
+
+In the `resolvers.ts` file, we handle the logic for resolving queries and managing errors. We’ll simulate an error by not finding a user based on their ID.
+
+```typescript
+import { IResolvers } from 'apollo-server';
+import { User } from './types';  // Define types for User
+
+// Sample data for demonstration
+const users: User[] = [
+  { id: '1', name: 'Alice', email: 'alice@example.com' },
+  { id: '2', name: 'Bob', email: 'bob@example.com' },
+];
+
+// Resolver functions
+export const resolvers: IResolvers = {
+  Query: {
+    getUser: (_: any, { id }: { id: string }) => {
+      try {
+        const user = users.find((user) => user.id === id);
+        if (!user) {
+          // Throwing an error when the user is not found
+          throw new Error('User not found');
+        }
+        return user;
+      } catch (error) {
+        // Handling errors and returning a meaningful message
+        return { message: error.message };
+      }
+    },
+  },
+};
+```
+
+### Step 4: Set up Apollo Server
+
+Now, let’s wire up the schema and resolvers in the `index.ts` file and configure Apollo Server.
+
+```typescript
+import { ApolloServer } from 'apollo-server';
+import { typeDefs } from './schema';
+import { resolvers } from './resolvers';
+
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  formatError: (err) => {
+    // Customize the error format
+    return {
+      message: err.message,
+      locations: err.locations,
+      path: err.path,
+    };
+  },
+});
+
+server.listen({ port: 4000 }).then(({ url }) => {
+  console.log(`Server ready at ${url}`);
+});
+```
+
+- The `formatError` function is used to customize the error messages sent to the client. This can help in filtering out sensitive information like stack traces and providing a user-friendly message instead.
+- The `formatError` method is especially useful for dealing with GraphQL errors globally.
+
+### Step 5: Handling Errors Gracefully
+
+In GraphQL, it's essential to return meaningful error messages and statuses. Here’s how the error flow works:
+
+1. If the user is found in the database (or data structure, like our array), we return the user object.
+2. If the user is not found, an error is thrown and caught in the `catch` block.
+3. Instead of sending a generic error, we return an object with a custom message (e.g., "User not found").
+
+You can further enhance error handling by:
+- Returning error codes, like `404` for not found, or `500` for server errors.
+- Using Apollo Server's `formatError` to ensure a consistent error structure.
+
+### Step 6: Define Custom Error Types
+
+Let’s define custom error types and modify the resolvers to return these custom error types in case of an issue.
+
+```typescript
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface Error {
+  message: string;
+}
+
+export type UserResult = User | Error;
+```
+
+With this approach, if the user is not found, you return an `Error` type rather than a simple message string. This makes your API response more structured and predictable.
+
+### Step 7: Run the Server
+
+Finally, you can run your server by executing:
+
+```bash
+npx ts-node src/index.ts
+```
+
+### Example Query
+
+Once your server is running, you can query it like this:
+
+```graphql
+query {
+  getUser(id: "1") {
+    id
+    name
+    email
+  }
+}
+```
+
+If the user is not found, the server will return something like this:
+
+```json
+{
+  "data": {
+    "getUser": {
+      "message": "User not found"
+    }
+  }
+}
+```
+
+If the user is found, the response will be the user’s data:
+
+```json
+{
+  "data": {
+    "getUser": {
+      "id": "1",
+      "name": "Alice",
+      "email": "alice@example.com"
+    }
+  }
+}
+```
+
+### Step 8: Error Handling Best Practices
+
+- **Custom Error Types**: Instead of returning a generic string error, return structured error objects to allow better client-side handling.
+- **Error Codes**: Consider implementing custom error codes (e.g., `USER_NOT_FOUND`, `INVALID_ARGUMENT`, etc.) to provide more clarity.
+- **Logging**: In production, you can use logging libraries like `winston` to log errors for better debugging.
+
+---
+
+### Conclusion
+
+In this guide, we covered how to set up GraphQL with Apollo Server and Node.js/TypeScript. We demonstrated handling errors by:
+
+1. Throwing errors when necessary (e.g., user not found).
+2. Returning structured error messages to the client.
+3. Using Apollo’s `formatError` method to customize the error response format globally.
+
+This approach helps you manage errors effectively, providing useful feedback to clients and ensuring that your API behaves consistently.
