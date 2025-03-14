@@ -1,29 +1,23 @@
-// src/index.ts
 import { ApolloServer } from "apollo-server";
-import mongoose from "mongoose";
-import { typeDefs } from "./shemas/userSchema";
-import { resolvers } from "./resolvers/userResolver";
+import { typeDefs } from "./schema";
+import { resolvers } from "./resolvers";
 
-// MongoDB URI (replace with your own MongoDB URI)
-const MONGO_URI = "mongodb://localhost:27017/graphQL";
+const isDev = false;
 
-
-// Create Apollo Server instance
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  formatError: (err) => {
+    // Customize the error format
+    return isDev
+      ? err
+      : {
+          message: err.message,
+          code: err.extensions.code,
+        };
+  },
 });
 
-// Connect to MongoDB and start the server
-mongoose
-  .connect(MONGO_URI)
-  .then(() => {
-    console.log("Connected to MongoDB");
-    return server.listen(4000);
-  })
-  .then(({ url }) => {
-    console.log(`Server ready at ${url}`);
-  })
-  .catch((error) => {
-    console.error("Error connecting to MongoDB:", error);
-  });
+server.listen({ port: 4000 }).then(({ url }) => {
+  console.log(`Server ready at ${url}`);
+});
