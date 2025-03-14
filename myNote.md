@@ -3300,3 +3300,321 @@ Your GraphQL server will be running on `http://localhost:4000`, and you can now 
 ### Conclusion:
 
 You now have a fully functional GraphQL server that supports both built-in directives (`@include`, `@skip`) and a custom directive (`@uppercase`). With this setup, you can further extend and build custom directives to fit the specific needs of your application.
+
+## Task 16
+
+To implement JWT authentication and protect GraphQL APIs using middleware integration with Apollo Server in Node.js and TypeScript, you need to go through several steps.
+
+Here’s a step-by-step explanation and full implementation of JWT authentication in a GraphQL API using Apollo Server with TypeScript:
+
+### Steps:
+
+1. **Install Dependencies**
+2. **Set Up Apollo Server**
+3. **Create JWT Middleware**
+4. **Create Authentication Logic**
+5. **Define GraphQL Resolvers**
+6. **Protect Resolvers Using Middleware**
+7. **Test the API**
+
+---
+
+### 1. Install Dependencies
+
+Start by installing the necessary dependencies:
+
+```bash
+npm install apollo-server graphql jsonwebtoken dotenv
+npm install @types/jsonwebtoken --save-dev
+```
+
+- **`apollo-server`**: For creating the GraphQL API.
+- **`graphql`**: GraphQL library.
+- **`jsonwebtoken`**: To sign and verify JWT tokens.
+- **`dotenv`**: To manage environment variables.
+
+Also, if you’re using TypeScript, make sure you have TypeScript installed and set up.
+
+```bash
+npm install typescript ts-node @types/node --save-dev
+```
+
+### 2. Set Up Apollo Server
+
+Create an `index.ts` file where you will set up Apollo Server.
+
+```typescript
+import { ApolloServer, gql } from "apollo-server";
+import { verify } from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+// TypeScript types for Apollo Server
+interface Context {
+  user: any;
+}
+
+// Define the schema for your GraphQL API
+const typeDefs = gql`
+  type Query {
+    me: User
+  }
+
+  type User {
+    id: ID!
+    username: String!
+  }
+`;
+
+// Define resolvers
+const resolvers = {
+  Query: {
+    me: (parent: any, args: any, context: Context) => {
+      return context.user;
+    },
+  },
+};
+
+// Authentication Middleware
+const authenticate = (context: any) => {
+  const token = context.req.headers["authorization"] || "";
+
+  if (!token) {
+    throw new Error("Authorization token is missing");
+  }
+
+  try {
+    const user = verify(token, process.env.JWT_SECRET as string);
+    return user;
+  } catch (err) {
+    throw new Error("Invalid or expired token");
+  }
+};
+
+// Create Apollo Server
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: ({ req }: any) => {
+    const user = authenticate({ req });
+    return { user };
+  },
+});
+
+// Start the server
+server.listen().then(({ url }) => {
+  console.log(`Server is running at ${url}`);
+});
+```
+
+### Explanation:
+
+- **Schema and Resolvers**:
+
+  - The schema defines a `Query` type with a `me` query that returns the `User`.
+  - In the resolvers, we return the authenticated user from the context.
+
+- **Authentication Middleware**:
+
+  - The `authenticate` function extracts the `Authorization` header from the incoming request.
+  - It then verifies the token using `jsonwebtoken.verify()`. If the token is valid, it returns the user data from the JWT. If not, it throws an error.
+
+- **Apollo Server Context**:
+  - The context is where we pass the user information into every resolver. In this case, we authenticate the user using the token from the request headers.
+
+### 3. JWT Authentication
+
+You also need to implement JWT token generation. You can add a separate function or route to generate the token. For simplicity, let’s add a `generateToken.ts` file:
+
+```typescript
+import jwt from "jsonwebtoken";
+
+const generateToken = (user: { id: string; username: string }) => {
+  return jwt.sign(user, process.env.JWT_SECRET as string, { expiresIn: "1h" });
+};
+
+export { generateToken };
+```
+
+This function signs a JWT token with the user's `id` and `username` and sets an expiration time.
+
+### 4. Create Authentication Logic
+
+Let’s say you want to add a `login` mutation to authenticate users. The mutation will receive a username and password, and if they are valid, it will return a JWT token.
+
+```typescript
+typeDefs = gql`
+  type Mutation {
+    login(username: String!, password: String!): String
+  }
+`;
+
+const resolvers = {
+  Mutation: {
+    login: async (
+      parent: any,
+      args: { username: string; password: string }
+    ) => {
+      // Validate user credentials (you would usually check against a DB here)
+      if (args.username === "admin" && args.password === "password") {
+        // Create user object
+        const user = {
+          id: "1",
+          username: args.username,
+        };
+
+        // Generate JWT token
+        return generateToken(user);
+      } else {
+        throw new Error("Invalid credentials");
+      }
+    },
+  },
+};
+```
+
+### 5. Protect Resolvers Using Middleware
+
+To protect a resolver like `me`, which should only be accessible if the user is authenticated, you use the `context` created in step 2.
+
+In the example, the `me` query requires the user to be authenticated. If no valid JWT is provided, the `authenticate` function will throw an error, denying access.
+
+### 6. Test the API
+
+Now, when you run the Apollo Server (`ts-node index.ts`), you can interact with the GraphQL API:
+
+- To **login**, use the `login` mutation, which will return a JWT token.
+
+```graphql
+mutation {
+  login(username: "admin", password: "password")
+}
+```
+
+- To **access the protected `me` query**, use the JWT token in the `Authorization` header.
+
+```graphql
+query {
+  me {
+    id
+    username
+  }
+}
+```
+
+In Postman, or any other API client, set the `Authorization` header like this:
+
+```
+Authorization: Bearer <your-jwt-token-here>
+```
+
+### Full Example Code:
+
+1. **index.ts**
+
+```typescript
+import { ApolloServer, gql } from "apollo-server";
+import { verify } from "jsonwebtoken";
+import dotenv from "dotenv";
+import { generateToken } from "./generateToken";
+
+dotenv.config();
+
+interface Context {
+  user: any;
+}
+
+const typeDefs = gql`
+  type Query {
+    me: User
+  }
+
+  type Mutation {
+    login(username: String!, password: String!): String
+  }
+
+  type User {
+    id: ID!
+    username: String!
+  }
+`;
+
+const resolvers = {
+  Query: {
+    me: (parent: any, args: any, context: Context) => {
+      return context.user;
+    },
+  },
+  Mutation: {
+    login: async (
+      parent: any,
+      args: { username: string; password: string }
+    ) => {
+      if (args.username === "admin" && args.password === "password") {
+        const user = { id: "1", username: args.username };
+        return generateToken(user);
+      } else {
+        throw new Error("Invalid credentials");
+      }
+    },
+  },
+};
+
+const authenticate = (context: any) => {
+  const body = context.req.body;
+  if (body && body.query) {
+    if (body.query.includes("mutation") && body.query.includes("login")) {
+      return null;
+    }
+  }
+  const token = context.req.headers["authorization"] || "";
+  if (!token) {
+    throw new Error("Authorization token is missing");
+  }
+
+  try {
+    const user = verify(token, process.env.JWT_SECRET as string);
+    return user;
+  } catch (err) {
+    throw new Error("Invalid or expired token");
+  }
+};
+
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: ({ req }: any) => {
+    const user = authenticate({ req });
+    return { user };
+  },
+});
+
+server.listen().then(({ url }) => {
+  console.log(`Server is running at ${url}`);
+});
+```
+
+2. **generateToken.ts**
+
+```typescript
+import jwt from "jsonwebtoken";
+
+const generateToken = (user: { id: string; username: string }) => {
+  return jwt.sign(user, process.env.JWT_SECRET as string, { expiresIn: "1h" });
+};
+
+export { generateToken };
+```
+
+### 7. Environment Variables
+
+Create a `.env` file to store your JWT secret key:
+
+```dotenv
+JWT_SECRET=mysecretkey
+```
+
+### Conclusion
+Bypass Login mutation
+This implementation covers the essential steps to integrate JWT authentication into your Apollo GraphQL server. By using JWTs, you can authenticate users and secure sensitive GraphQL queries or mutations. You can extend this further by adding user validation (e.g., checking credentials against a database) or implementing refresh tokens.
