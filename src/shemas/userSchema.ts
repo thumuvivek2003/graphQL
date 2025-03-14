@@ -1,9 +1,14 @@
 // src/schemas/userSchema.ts
 import { gql } from "apollo-server";
 
+
 const typeDefs = gql`
   # Define GraphQL Input Type
-  input UserInput
+  input UserInput {
+    name: String!
+    email: String!
+    age: Int!
+  }
 
   # Define the GraphQL Mutation
   type Mutation {
