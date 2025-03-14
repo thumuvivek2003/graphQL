@@ -4108,3 +4108,299 @@ You can change the `offset` to 10, 20, etc., to get the next pages of posts.
 This example demonstrates how to implement **offset-based pagination** using GraphQL, Apollo Server, and TypeScript. The core idea is to manage the `offset` and `limit` arguments in your query and adjust the resolver logic to handle the pagination accordingly.
 
 You can easily modify this to work with an actual database by replacing the mock data with real database queries, ensuring you take care of the `offset` and `limit` in your SQL or NoSQL queries.
+
+
+## Task 19 : Cursor 
+Cursor-based pagination is a method of paginating through a dataset using a cursor (usually an ID or timestamp) that points to a specific position in the dataset, rather than using page numbers. It is more efficient, especially with large datasets, as it allows clients to request data in small chunks, and each request is based on the last seen "cursor."
+
+Here’s a clear breakdown of how to implement cursor-based pagination in a GraphQL API using Node.js, TypeScript, and Apollo Server:
+
+### Steps to Implement Cursor-Based Pagination:
+
+1. **Set up your Apollo Server and Typescript project.**
+
+2. **Create a GraphQL schema for the pagination.**
+
+3. **Implement resolver functions for pagination.**
+
+4. **Handle pagination logic in the resolver:**
+   - Fetch items from the database.
+   - Implement the cursor logic (using a unique field, like an `id` or `createdAt`).
+   - Encode and decode cursors (using base64 or another method).
+
+5. **Test pagination.**
+
+---
+
+### Step 1: Setting Up Apollo Server with TypeScript
+
+First, let's install the necessary packages.
+
+```bash
+npm init -y
+npm install apollo-server graphql
+npm install typescript ts-node @types/node --save-dev
+```
+
+Then, create the `tsconfig.json` file if it’s not already there:
+
+```bash
+npx tsc --init
+```
+
+In your `tsconfig.json`, make sure you enable ES modules or set the `module` to `ESNext` for cleaner imports.
+
+---
+
+### Step 2: Define GraphQL Schema
+
+You need a schema that defines the type and a connection for pagination. For example, let's say you are paginating a list of `Posts`:
+
+```graphql
+# schema.graphql
+
+type Post {
+  id: ID!
+  title: String!
+  content: String!
+  createdAt: String!
+}
+
+type PostConnection {
+  edges: [PostEdge]
+  pageInfo: PageInfo
+}
+
+type PostEdge {
+  node: Post
+  cursor: String
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type Query {
+  getPosts(first: Int, after: String, last: Int, before: String): PostConnection
+}
+```
+
+### Step 3: Implement Resolver Logic
+
+In the resolver, you need to implement pagination logic. Here’s how you can do this:
+
+```typescript
+// resolvers.ts
+import { ApolloError } from "apollo-server-errors";
+
+// Sample data to simulate a database
+const posts = [
+  {
+    id: 1,
+    title: "First Post",
+    content: "Content for the first post",
+    createdAt: "2025-03-10",
+  },
+  {
+    id: 2,
+    title: "Second Post",
+    content: "Content for the second post",
+    createdAt: "2025-03-11",
+  },
+  {
+    id: 3,
+    title: "Third Post",
+    content: "Content for the third post",
+    createdAt: "2025-03-12",
+  },
+  {
+    id: 4,
+    title: "Fourth Post",
+    content: "Content for the fourth post",
+    createdAt: "2025-03-13",
+  },
+  {
+    id: 5,
+    title: "Fifth Post",
+    content: "Content for the fifth post",
+    createdAt: "2025-03-14",
+  },
+];
+
+const encodeCursor = (id: number): string =>
+  Buffer.from(id.toString()).toString("base64");
+const decodeCursor = (cursor: string): number =>
+  parseInt(Buffer.from(cursor, "base64").toString());
+
+const resolvers = {
+  Query: {
+    getPosts: (
+      _: any,
+      {
+        first,
+        after,
+        last,
+        before,
+      }: { first: number; after: string; last: number; before: string }
+    ) => {
+      let items = posts;
+
+      if (after) {
+        const decodedCursor = decodeCursor(after);
+        items = items.filter((post) => post.id > decodedCursor);
+      }
+
+      if (before) {
+        const decodedCursor = decodeCursor(before);
+        items = items.filter((post) => post.id < decodedCursor);
+      }
+
+      if (first) {
+        items = items.slice(0, first);
+      }
+
+      if (last) {
+        items = items.slice(-last);
+      }
+
+      const edges = items.map((post) => ({
+        node: post,
+        cursor: encodeCursor(post.id),
+      }));
+
+      const startCursor = edges.length > 0 ? edges[0].cursor : null;
+      const endCursor =
+        edges.length > 0 ? edges[edges.length - 1].cursor : null;
+
+      const hasNextPage = posts.some(
+        (post) => post.id > decodeCursor(endCursor || "0")
+      );
+      const hasPreviousPage = posts.some(
+        (post) => post.id < decodeCursor(startCursor || "0")
+      );
+
+      return {
+        edges,
+        pageInfo: {
+          hasNextPage,
+          hasPreviousPage,
+          startCursor,
+          endCursor,
+        },
+      };
+    },
+  },
+};
+
+export default resolvers;
+```
+
+### Explanation of Code:
+
+- **`encodeCursor` and `decodeCursor`:** These functions help to convert the post `id` into a base64 encoded string (which is commonly used as a cursor) and vice versa.
+  
+- **`getPosts` Resolver:**
+  - **Filter posts by `after` or `before` cursor**: Filters the posts based on the cursor provided by the client.
+  - **Limit results with `first` or `last`**: It slices the posts according to the pagination parameters `first` or `last`.
+  - **Page Info**: The resolver returns `pageInfo`, which includes:
+    - `hasNextPage`: Boolean indicating if there are more pages.
+    - `hasPreviousPage`: Boolean indicating if there are previous pages.
+    - `startCursor`: The cursor of the first item.
+    - `endCursor`: The cursor of the last item.
+
+### Step 4: Apollo Server Setup
+
+Now, let’s set up the Apollo server.
+
+```typescript
+// index.ts
+import { ApolloServer, gql } from 'apollo-server';
+import resolvers from './resolvers';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+// Load schema
+const typeDefs = gql(readFileSync(join(__dirname, 'schema.graphql'), 'utf-8'));
+
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+});
+
+server.listen().then(({ url }) => {
+  console.log(`Server ready at ${url}`);
+});
+```
+
+### Step 5: Test the Pagination
+
+Once everything is set up, you can run your server with the command:
+
+```bash
+ts-node index.ts
+```
+
+Here’s an example query to test cursor-based pagination:
+
+```graphql
+query {
+  getPosts(first: 2, after: "MQ==") {
+    edges {
+      node {
+        id
+        title
+        content
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+```
+
+### Example Response:
+
+```json
+{
+  "data": {
+    "getPosts": {
+      "edges": [
+        {
+          "node": {
+            "id": "2",
+            "title": "Second Post",
+            "content": "Content for the second post"
+          },
+          "cursor": "Mg=="
+        },
+        {
+          "node": {
+            "id": "3",
+            "title": "Third Post",
+            "content": "Content for the third post"
+          },
+          "cursor": "Mw=="
+        }
+      ],
+      "pageInfo": {
+        "hasNextPage": true,
+        "hasPreviousPage": false,
+        "startCursor": "Mg==",
+        "endCursor": "Mw=="
+      }
+    }
+  }
+}
+```
+
+### Conclusion:
+
+This is a complete implementation of cursor-based pagination in Apollo Server with TypeScript. You can refine the pagination logic further by adding more error handling, using a real database (e.g., MongoDB or PostgreSQL), and optimizing for large datasets. Cursor-based pagination is great for scenarios where the data is constantly changing and you need to avoid issues like missing data or duplicate data in paginated results.
