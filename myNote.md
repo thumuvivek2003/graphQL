@@ -2394,3 +2394,227 @@ export const resolvers = {
   - For static types or schemas where the types don’t need complex resolution, GraphQL may handle type resolution for you.
 
 Using `if-else` statements is not inherently bad, but for larger schemas with many types, you should consider abstracting the logic into helper functions or type guards. This will make your code cleaner, more maintainable, and easier to scale.
+
+
+
+## Task 13
+Great to hear you're learning GraphQL and want to dive into input types in mutations! Let me guide you through how to implement this in a Node.js project using TypeScript, Apollo Server, and MongoDB.
+
+### Overview of What We'll Cover:
+1. **GraphQL Input Types**: Input types are used in mutations to pass data as arguments. They improve the readability and structure of your GraphQL API.
+2. **Apollo Server**: For handling the GraphQL server.
+3. **MongoDB**: We'll use MongoDB to store data.
+4. **TypeScript**: We'll take advantage of TypeScript's type system to enforce strong typing.
+
+---
+
+### Step 1: Initialize the Project
+First, initialize a Node.js project with the following command:
+
+```bash
+mkdir graphql-apollo
+cd graphql-apollo
+npm init -y
+```
+
+### Step 2: Install Dependencies
+Install the necessary dependencies:
+
+```bash
+npm install apollo-server graphql mongoose
+npm install typescript @types/node @types/graphql @types/mongoose ts-node
+```
+
+### Step 3: Set Up TypeScript Configuration
+Create a `tsconfig.json` file to configure TypeScript:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts"]
+}
+```
+
+### Step 4: Create Folder Structure
+Now, create the following folder structure for organization:
+
+```
+/graphql-apollo
+  /src
+    /models
+    /resolvers
+    /schemas
+    index.ts
+```
+
+### Step 5: Define the MongoDB Model
+In the `/src/models` folder, create a file called `UserModel.ts` to define the MongoDB schema.
+
+```typescript
+// src/models/UserModel.ts
+import { Schema, model, Document } from "mongoose";
+
+// Define User TypeScript Interface
+interface IUser extends Document {
+  name: string;
+  email: string;
+  age: number;
+}
+
+// Define the Mongoose Schema
+const userSchema = new Schema<IUser>({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  age: { type: Number, required: true },
+});
+
+// Create the model
+const User = model<IUser>("User", userSchema);
+
+export { User, IUser };
+```
+
+### Step 6: Create the GraphQL Input Type and Schema
+In `/src/schemas`, create the file `userSchema.ts` to define the GraphQL schema.
+
+```typescript
+// src/schemas/userSchema.ts
+import { gql } from 'apollo-server';
+
+const typeDefs = gql`
+  # Define GraphQL Input Type
+  input UserInput {
+    name: String!
+    email: String!
+    age: Int!
+  }
+
+  # Define the GraphQL Mutation
+  type Mutation {
+    addUser(input: UserInput!): User!
+  }
+
+  # Define the User Type (output type)
+  type User {
+    id: ID!
+    name: String!
+    email: String!
+    age: Int!
+  }
+`;
+
+export { typeDefs };
+```
+
+### Step 7: Create the Resolver for Mutations
+In `/src/resolvers`, create a `userResolver.ts` to define the mutation logic:
+
+```typescript
+// src/resolvers/userResolver.ts
+import { User, IUser } from "../models/UserModel";
+import { IResolvers } from "apollo-server";
+
+const resolvers: IResolvers = {
+  Mutation: {
+    addUser: async (_: any, { input }: { input: { name: string; email: string; age: number } }) => {
+      // Create new user using the input data
+      const user = new User({
+        name: input.name,
+        email: input.email,
+        age: input.age,
+      });
+
+      // Save user to MongoDB
+      await user.save();
+
+      return user;
+    },
+  },
+};
+
+export { resolvers };
+```
+
+### Step 8: Set Up Apollo Server and MongoDB Connection
+In the `index.ts` file, connect to MongoDB and set up the Apollo Server:
+
+```typescript
+// src/index.ts
+import { ApolloServer } from "apollo-server";
+import mongoose from "mongoose";
+import { typeDefs } from "./schemas/userSchema";
+import { resolvers } from "./resolvers/userResolver";
+
+// MongoDB URI (replace with your own MongoDB URI)
+const MONGO_URI = "mongodb://localhost:27017/graphql_example";
+
+// Create Apollo Server instance
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+});
+
+// Connect to MongoDB and start the server
+mongoose
+  .connect(MONGO_URI)
+  .then(() => {
+    console.log("Connected to MongoDB");
+    return server.listen(4000);
+  })
+  .then(({ url }) => {
+    console.log(`Server ready at ${url}`);
+  })
+  .catch((error) => {
+    console.error("Error connecting to MongoDB:", error);
+  });
+```
+
+### Step 9: Run the Server
+To run the server, use the following command:
+
+```bash
+npx ts-node src/index.ts
+```
+
+This will start the Apollo Server on `http://localhost:4000`. You can test your mutation in a GraphQL playground like Apollo Studio or Postman.
+
+### Example Mutation Query
+You can test the mutation like this:
+
+```graphql
+mutation {
+  addUser(input: { name: "John Doe", email: "john@example.com", age: 30 }) {
+    id
+    name
+    email
+    age
+  }
+}
+```
+
+### Explanation of the Code:
+1. **GraphQL Input Type (`UserInput`)**: The `UserInput` type is defined in the GraphQL schema to define the structure of the data being sent in the mutation. This improves code readability and ensures that the data is structured consistently.
+   
+2. **User Model (`UserModel.ts`)**: This is the Mongoose model for MongoDB. It defines the schema for storing user data (name, email, and age).
+
+3. **Mutation (`addUser`)**: This mutation takes an input object of type `UserInput` and adds a new user to the MongoDB database. This is done in the `addUser` resolver function.
+
+4. **Apollo Server**: Apollo Server is set up to handle GraphQL requests. The server connects to MongoDB and provides the mutation functionality.
+
+---
+
+### Conclusion:
+By using GraphQL input types, we've structured the mutation arguments cleanly and enforced consistency in how data is passed into the GraphQL API. The use of TypeScript ensures strong typing and error handling, making it easier to maintain the project as it grows.
+
+Let me know if you have any questions or need further clarification!
+
+If no atleast one query present GraphQL returns error:
+ Error happens because GraphQL schemas require a Query type by default, even if you only use mutations. The fix is to define an empty or minimal Query type, as shown above. After adding this, your server should run correctly. Let me know if you encounter any other issues!
