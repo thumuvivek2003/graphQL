@@ -3616,5 +3616,262 @@ JWT_SECRET=mysecretkey
 ```
 
 ### Conclusion
+
 Bypass Login mutation
 This implementation covers the essential steps to integrate JWT authentication into your Apollo GraphQL server. By using JWTs, you can authenticate users and secure sensitive GraphQL queries or mutations. You can extend this further by adding user validation (e.g., checking credentials against a database) or implementing refresh tokens.
+
+## Task 17 : Rolebased Access
+
+To implement role-based access control (RBAC) in a GraphQL API with Node.js, TypeScript, and Apollo Server, we need to follow these steps:
+
+1. **Set up Apollo Server**: Set up the Apollo Server with Node.js and TypeScript.
+2. **Create GraphQL Schema**: Define GraphQL types and resolvers.
+3. **Middleware for Authentication**: Implement a middleware to authenticate the user (e.g., JWT).
+4. **Implement Role-Based Access Control**: Implement role checks within resolvers or as middleware.
+
+Here's a full example of how to implement this in Node.js using Apollo Server and TypeScript.
+
+### Step 1: Set up Apollo Server
+
+Install the necessary packages:
+
+```bash
+npm init -y
+npm install apollo-server graphql jsonwebtoken bcryptjs
+npm install --save-dev typescript @types/node @types/graphql @types/jsonwebtoken ts-node
+```
+
+Set up the TypeScript config file (`tsconfig.json`):
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*.ts"]
+}
+```
+
+### Step 2: GraphQL Schema
+
+Define a GraphQL schema with user roles.
+
+```ts
+// src/schema.ts
+import { gql } from "apollo-server";
+
+export const typeDefs = gql`
+  type Query {
+    users: [User]
+    me: User
+  }
+
+  type Mutation {
+    login(username: String!, password: String!): AuthResponse
+    createUser(username: String!, password: String!, role: Role!): User
+  }
+
+  type User {
+    id: ID!
+    username: String!
+    role: Role!
+  }
+
+  type AuthResponse {
+    token: String!
+  }
+
+  enum Role {
+    ADMIN
+    USER
+  }
+`;
+```
+
+In this schema:
+
+- `User` represents a user with an ID, username, and role.
+- `AuthResponse` is used for the login response, returning a JWT token.
+- The `Role` enum defines roles, such as `ADMIN` and `USER`.
+
+### Step 3: Resolvers and Role-Based Access
+
+Create resolvers that handle authorization logic based on the role. We'll create a middleware function to verify the JWT token and check the user's role before resolving certain fields.
+
+```ts
+// src/resolvers.ts
+import { AuthenticationError, ForbiddenError } from "apollo-server";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+
+const users = [
+  { id: "1", username: "admin", password: "adminpassword", role: "ADMIN" },
+  { id: "2", username: "user", password: "userpassword", role: "USER" },
+];
+
+const SECRET_KEY = "your_secret_key";
+
+export const resolvers = {
+  Query: {
+    users: (parent: any, args: any, context: any) => {
+      if (!context.user || context.user.role !== "ADMIN") {
+        throw new ForbiddenError("Not authorized");
+      }
+      return users;
+    },
+    me: (parent: any, args: any, context: any) => {
+      if (!context.user) {
+        throw new AuthenticationError("Not authenticated");
+      }
+      return users.find((user) => user.id === context.user.id);
+    },
+  },
+  Mutation: {
+    login: async (
+      parent: any,
+      { username, password }: { username: string; password: string }
+    ) => {
+      const user = users.find((u) => u.username === username);
+      if (!user || !(await bcrypt.compare(password, user.password))) {
+        throw new AuthenticationError("Invalid credentials");
+      }
+
+      const token = jwt.sign({ id: user.id, role: user.role }, SECRET_KEY, {
+        expiresIn: "1h",
+      });
+      return { token };
+    },
+    createUser: (
+      parent: any,
+      {
+        username,
+        password,
+        role,
+      }: { username: string; password: string; role: string }
+    ) => {
+      const newUser = {
+        id: (users.length + 1).toString(),
+        username,
+        password: bcrypt.hashSync(password, 10),
+        role,
+      };
+      users.push(newUser);
+      return newUser;
+    },
+  },
+};
+```
+
+### Step 4: Authentication Middleware
+
+You need middleware to validate the JWT token for authentication and role authorization. We will use this middleware to extract the user information and attach it to the context of the request.
+
+```ts
+// src/authMiddleware.ts
+import { AuthenticationError } from "apollo-server";
+import jwt from "jsonwebtoken";
+
+const SECRET_KEY = "your_secret_key";
+
+export const authenticate = (req: any) => {
+  const token = req.headers.authorization || "";
+  const query = req.body?.query || "";
+
+  if (query.includes("login") || query.includes("createUser")) {
+    return null;
+  }
+
+  if (!token) {
+    throw new AuthenticationError("Authentication token is required");
+  }
+
+  try {
+    const decoded = jwt.verify(token.replace("Bearer ", ""), SECRET_KEY) as {
+      id: string;
+      role: string;
+    };
+    return decoded;
+  } catch (err) {
+    throw new AuthenticationError("Invalid or expired token");
+  }
+};
+```
+
+### Step 5: Apollo Server Setup with Context and Middleware
+
+Finally, set up the Apollo Server with context to handle authentication and role-based access.
+
+```ts
+// src/server.ts
+import { ApolloServer } from "apollo-server";
+import { typeDefs } from "./schema";
+import { resolvers } from "./resolvers";
+import { authenticate } from "./authMiddleware";
+
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: ({ req }) => {
+    const user = authenticate(req);
+    return { user };
+  },
+});
+
+server.listen().then(({ url }) => {
+  console.log(`Server is running at ${url}`);
+});
+```
+
+### Step 6: Running the Server
+
+To run the server, use the following command:
+
+```bash
+npx ts-node src/server.ts
+```
+
+### Testing with GraphQL Playground
+
+Once the server is running, you can test it using GraphQL Playground.
+
+1. **Login** with a user to get the token (use the login mutation):
+
+```graphql
+mutation {
+  login(username: "admin", password: "adminpassword") {
+    token
+  }
+}
+```
+
+2. **Access Protected Resources**:
+
+Pass the `Authorization` header with the token in subsequent requests:
+
+```graphql
+query {
+  users {
+    id
+    username
+    role
+  }
+}
+```
+
+If you are logged in as an `ADMIN`, you will be able to access the list of users. Otherwise, you will get a `ForbiddenError`.
+
+### Explanation of Key Components
+
+1. **Authentication**: The `login` mutation authenticates users by verifying their username and password, generating a JWT token if successful.
+2. **Role-Based Access Control**: In the `users` query, we check if the user has the `ADMIN` role to access all users. Similarly, other fields can be protected using role checks.
+3. **JWT Validation Middleware**: The middleware (`authenticate`) validates the JWT token passed with the `Authorization` header, extracting the user's role and attaching it to the context for authorization.
+
+### Conclusion
+
+This setup allows you to protect your GraphQL fields based on the user's role by checking the `context` in resolvers. You can customize and extend this approach by adding more complex roles or permissions as needed.
