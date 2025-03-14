@@ -1,20 +1,14 @@
-import { gql } from 'apollo-server';
+import { gql } from "apollo-server";
 
-// Define the GraphQL schema
 export const typeDefs = gql`
+  directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+  directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+  # Custom directive example
+  directive @uppercase on FIELD_DEFINITION
+
   type Query {
-    getUser(id: ID!): User
+    hello(name: String!): String @uppercase
+    info: String
   }
-
-  type User {
-    id: ID!
-    name: String!
-    email: String!
-  }
-
-  type Error {
-    message: String!
-  }
-
-  union UserResult = User | Error
 `;
