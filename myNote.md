@@ -3875,3 +3875,236 @@ If you are logged in as an `ADMIN`, you will be able to access the list of users
 ### Conclusion
 
 This setup allows you to protect your GraphQL fields based on the user's role by checking the `context` in resolvers. You can customize and extend this approach by adding more complex roles or permissions as needed.
+
+## Task 18
+
+Sure! Let's walk through implementing **Offset-based Pagination** in a GraphQL API using **Node.js**, **TypeScript**, and **Apollo Server**.
+
+### Prerequisites
+
+- Node.js
+- TypeScript
+- Apollo Server
+- GraphQL
+- A database (I'll use a mock database in this example, but you can adapt it to your database of choice, like MongoDB, PostgreSQL, etc.)
+
+### Step-by-Step Guide
+
+1. **Set Up Project**
+
+First, let's create a project directory and initialize the project.
+
+```bash
+mkdir graphql-pagination
+cd graphql-pagination
+npm init -y
+```
+
+2. **Install Required Dependencies**
+
+You need to install the following dependencies:
+
+- `apollo-server`: Apollo Server library for building GraphQL APIs.
+- `graphql`: Core GraphQL library.
+- `typescript`: TypeScript compiler.
+- `@types/node`: TypeScript types for Node.js.
+- `ts-node`: TypeScript execution environment for running your code directly.
+- `nodemon`: For auto-restarting the server during development.
+
+Run the following command to install the dependencies:
+
+```bash
+npm install apollo-server graphql
+npm install --save-dev typescript ts-node @types/node nodemon
+```
+
+3. **Configure TypeScript**
+
+Next, create a `tsconfig.json` file to configure TypeScript.
+
+```bash
+npx tsc --init
+```
+
+In the `tsconfig.json`, make sure the following fields are correctly configured:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+```
+
+4. **Create Project Structure**
+
+Now, let's create a basic project structure.
+
+```bash
+mkdir src
+cd src
+touch index.ts resolvers.ts schema.ts
+```
+
+- `index.ts`: Entry point for the application (setting up Apollo Server).
+- `resolvers.ts`: Defines the GraphQL resolvers for queries and mutations.
+- `schema.ts`: Defines the GraphQL schema, including types and queries.
+
+5. **Define GraphQL Schema**
+
+In the `schema.ts`, define the necessary types for the pagination:
+
+```typescript
+import { gql } from "apollo-server";
+
+export const typeDefs = gql`
+  type Post {
+    id: ID!
+    title: String!
+    content: String!
+  }
+
+  type PaginatedPosts {
+    posts: [Post!]!
+    totalCount: Int!
+    hasNextPage: Boolean!
+  }
+
+  type Query {
+    getPosts(offset: Int!, limit: Int!): PaginatedPosts!
+  }
+`;
+```
+
+Here, we define:
+
+- `Post`: A type for the post, with fields like `id`, `title`, and `content`.
+- `PaginatedPosts`: A type that will return the list of posts along with pagination info like `totalCount` (total number of posts) and `hasNextPage` (whether there are more pages).
+
+6. **Define Resolvers**
+
+In `resolvers.ts`, implement the resolver logic to handle the offset-based pagination.
+
+```typescript
+interface Post {
+  id: string;
+  title: string;
+  content: string;
+}
+
+const mockPosts: Post[] = new Array(100).fill(null).map((_, index) => ({
+  id: index.toString(),
+  title: `Post ${index + 1}`,
+  content: `Content for post ${index + 1}`,
+}));
+
+const resolvers = {
+  Query: {
+    getPosts: (
+      _parent: any,
+      { offset, limit }: { offset: number; limit: number }
+    ) => {
+      // Get the posts based on offset and limit
+      const posts = mockPosts.slice(offset, offset + limit);
+      const totalCount = mockPosts.length;
+      const hasNextPage = offset + limit < totalCount;
+
+      return {
+        posts,
+        totalCount,
+        hasNextPage,
+      };
+    },
+  },
+};
+
+export default resolvers;
+```
+
+Here:
+
+- `mockPosts`: A mock array of posts to simulate a database.
+- `getPosts`: The resolver that accepts two arguments, `offset` (the starting index) and `limit` (the number of posts to fetch). It slices the `mockPosts` array to return the requested subset of posts.
+  - `hasNextPage`: Determines if there are more posts after the current page based on the offset and limit.
+
+7. **Create Entry Point (index.ts)**
+
+In `index.ts`, set up Apollo Server to use the schema and resolvers.
+
+```typescript
+import { ApolloServer } from "apollo-server";
+import { typeDefs } from "./schema";
+import resolvers from "./resolvers";
+
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+});
+
+server.listen().then(({ url }) => {
+  console.log(`Server ready at ${url}`);
+});
+```
+
+8. **Run the Server**
+
+To run the server, modify your `package.json` to add a start script:
+
+```json
+"scripts": {
+  "start": "ts-node src/index.ts"
+}
+```
+
+Then, run the server:
+
+```bash
+npm start
+```
+
+The server should be up and running at `http://localhost:4000/`. You can open this URL in your browser to access the Apollo GraphQL Playground.
+
+### Example Query
+
+Once your server is running, you can make the following GraphQL query to test the pagination:
+
+```graphql
+query {
+  getPosts(offset: 0, limit: 10) {
+    posts {
+      id
+      title
+      content
+    }
+    totalCount
+    hasNextPage
+  }
+}
+```
+
+This query fetches the first 10 posts (`offset: 0`, `limit: 10`) and will return:
+
+- A list of 10 posts.
+- The `totalCount`, which is 100 (the total number of posts).
+- `hasNextPage`, which will be `true` since there are more than 10 posts.
+
+You can change the `offset` to 10, 20, etc., to get the next pages of posts.
+
+### Explanation
+
+- **Offset**: This is the starting point in the dataset. It allows you to "skip" over a certain number of results. For example, an offset of 0 means start from the beginning, offset of 10 means start from the 11th item, etc.
+- **Limit**: This determines how many results you want to return in a single query.
+- **`hasNextPage`**: This field tells you whether there are more items after the current set of results, which is useful for implementing pagination controls in the front-end.
+
+### Conclusion
+
+This example demonstrates how to implement **offset-based pagination** using GraphQL, Apollo Server, and TypeScript. The core idea is to manage the `offset` and `limit` arguments in your query and adjust the resolver logic to handle the pagination accordingly.
+
+You can easily modify this to work with an actual database by replacing the mock data with real database queries, ensuring you take care of the `offset` and `limit` in your SQL or NoSQL queries.

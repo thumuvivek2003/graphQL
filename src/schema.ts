@@ -1,29 +1,19 @@
-// src/schema.ts
 import { gql } from "apollo-server";
 
 export const typeDefs = gql`
-  type Query {
-    users: [User]
-    me: User
-  }
-
-  type Mutation {
-    login(username: String!, password: String!): AuthResponse
-    createUser(username: String!, password: String!, role: Role!): User
-  }
-
-  type User {
+  type Post {
     id: ID!
-    username: String!
-    role: Role!
+    title: String!
+    content: String!
   }
 
-  type AuthResponse {
-    token: String!
+  type PaginatedPosts {
+    posts: [Post!]!
+    totalCount: Int!
+    hasNextPage: Boolean!
   }
 
-  enum Role {
-    ADMIN
-    USER
+  type Query {
+    getPosts(offset: Int!, limit: Int!): PaginatedPosts!
   }
 `;
