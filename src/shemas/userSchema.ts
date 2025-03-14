@@ -3,11 +3,7 @@ import { gql } from "apollo-server";
 
 const typeDefs = gql`
   # Define GraphQL Input Type
-  input UserInput {
-    name: String!
-    email: String!
-    age: Int!
-  }
+  input UserInput
 
   # Define the GraphQL Mutation
   type Mutation {
@@ -27,3 +23,9 @@ const typeDefs = gql`
 `;
 
 export { typeDefs };
+
+export type UserInput = {
+  name: string;
+  email: string;
+  age: number;
+};
