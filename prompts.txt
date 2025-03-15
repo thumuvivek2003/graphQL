@@ -14,3 +14,14 @@ query Query($a: Float!, $b: Float!, $addA2: Float!, $addB2: Float!) {
 very good now give me detailed notes for the above code in a structured plan
 
 Hi, for react if i want to do applications task like things i simply create a folder for that and in that folder only i include all folder with inde and that index is used in app - but now i am doing backend - especially learning graphql - can i do same approach here also how ?
+
+my script is like   "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "users": "tsx watch src/users-service.ts",
+    "orders": "tsx watch src/orders-service.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }, now can i run users orders dev with singe command if so how 
+
+
+
+why it called as federation  , stitching , explain the meaning and how these connects 
