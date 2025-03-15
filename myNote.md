@@ -4631,3 +4631,335 @@ This minimizes database hits and **resolves the N+1 query problem**.
 - **After DataLoader** → One batched query, significantly improving performance.
 
 With this setup, your Apollo GraphQL server in Node.js with TypeScript and MongoDB is now optimized for fetching related data efficiently. 🚀
+
+## Task 22 : Schema Stitching and Federation 
+### **Schema Stitching and Federation in GraphQL with Apollo Server (Node.js & TypeScript)**
+
+Schema Stitching and Apollo Federation are techniques used to merge multiple GraphQL services into a single unified schema. 
+
+- **Schema Stitching**: Manually combines multiple schemas into a single schema.
+- **Apollo Federation**: Allows independent GraphQL services (subgraphs) to form a single unified API.
+
+We will implement **Apollo Federation** in Node.js using TypeScript. 
+
+---
+
+## **Step 1: Setup the Project**
+
+### **Install Dependencies**
+```sh
+mkdir graphql-federation && cd graphql-federation
+npm init -y
+npm install apollo-server @apollo/federation graphql typescript ts-node-dev @types/node
+```
+
+Create `tsconfig.json` for TypeScript:
+```json
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES6",
+    "strict": true,
+    "esModuleInterop": true,
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}
+```
+
+Create `src/` directory:
+```sh
+mkdir src
+```
+
+---
+
+## **Step 2: Create Two Subgraphs (Microservices)**
+
+### **Subgraph 1: Users Service**
+
+Create `src/users-service.ts`:
+```ts
+import { ApolloServer } from "apollo-server";
+import { buildSubgraphSchema } from "@apollo/federation";
+import { gql } from "graphql-tag";
+
+// Define the schema for the users service
+const typeDefs = gql`
+  extend type Query {
+    users: [User]
+  }
+
+  type User @key(fields: "id") {
+    id: ID!
+    name: String!
+    email: String!
+  }
+`;
+
+// Sample data
+const users = [
+  { id: "1", name: "John Doe", email: "john@example.com" },
+  { id: "2", name: "Jane Doe", email: "jane@example.com" },
+];
+
+// Resolvers
+const resolvers = {
+  Query: {
+    users: () => users,
+  },
+  User: {
+    __resolveReference(user: { id: string }) {
+      return users.find((u) => u.id === user.id);
+    },
+  },
+};
+
+// Start Apollo Server for Users Service
+const server = new ApolloServer({
+  schema: buildSubgraphSchema([{ typeDefs, resolvers }]),
+});
+
+server.listen({ port: 4001 }).then(({ url }) => {
+  console.log(`🚀 Users service running at ${url}`);
+});
+```
+
+---
+
+### **Subgraph 2: Orders Service**
+Create `src/orders-service.ts`:
+```ts
+import { ApolloServer } from "apollo-server";
+import { buildSubgraphSchema } from "@apollo/federation";
+import { gql } from "graphql-tag";
+
+// Define the schema for the orders service
+const typeDefs = gql`
+  extend type Query {
+    orders: [Order]
+  }
+
+  type Order {
+    id: ID!
+    product: String!
+    price: Float!
+    user: User
+  }
+
+  extend type User @key(fields: "id") {
+    id: ID! @external
+  }
+`;
+
+// Sample data
+const orders = [
+  { id: "101", product: "Laptop", price: 999.99, userId: "1" },
+  { id: "102", product: "Phone", price: 499.99, userId: "2" },
+];
+
+// Resolvers
+const resolvers = {
+  Query: {
+    orders: () => orders,
+  },
+  Order: {
+    user(order: { userId: string }) {
+      return { __typename: "User", id: order.userId };
+    },
+  },
+};
+
+// Start Apollo Server for Orders Service
+const server = new ApolloServer({
+  schema: buildSubgraphSchema([{ typeDefs, resolvers }]),
+});
+
+server.listen({ port: 4002 }).then(({ url }) => {
+  console.log(`🚀 Orders service running at ${url}`);
+});
+```
+
+---
+
+## **Step 3: Create the Apollo Gateway**
+
+Create `src/gateway.ts`:
+```ts
+import { ApolloServer } from "apollo-server";
+import { ApolloGateway } from "@apollo/gateway";
+
+const gateway = new ApolloGateway({
+  serviceList: [
+    { name: "users", url: "http://localhost:4001" },
+    { name: "orders", url: "http://localhost:4002" },
+  ],
+});
+
+const server = new ApolloServer({
+  gateway,
+  subscriptions: false,
+});
+
+server.listen({ port: 4000 }).then(({ url }) => {
+  console.log(`🚀 Gateway running at ${url}`);
+});
+```
+
+---
+
+## **Step 4: Run the Federation Services**
+Open three terminals and run:
+
+1. Start **Users Service**:
+   ```sh
+   npx ts-node-dev src/users-service.ts
+   ```
+
+2. Start **Orders Service**:
+   ```sh
+   npx ts-node-dev src/orders-service.ts
+   ```
+
+3. Start **Apollo Gateway**:
+   ```sh
+   npx ts-node-dev src/gateway.ts
+   ```
+
+---
+
+## **Step 5: Test the Federation API**
+Open `http://localhost:4000` in GraphQL Playground and run:
+
+```graphql
+query {
+  users {
+    id
+    name
+    email
+  }
+  orders {
+    id
+    product
+    price
+    user {
+      id
+      name
+    }
+  }
+}
+```
+
+### **Expected Output:**
+```json
+{
+  "data": {
+    "users": [
+      { "id": "1", "name": "John Doe", "email": "john@example.com" },
+      { "id": "2", "name": "Jane Doe", "email": "jane@example.com" }
+    ],
+    "orders": [
+      { "id": "101", "product": "Laptop", "price": 999.99, "user": { "id": "1", "name": "John Doe" } },
+      { "id": "102", "product": "Phone", "price": 499.99, "user": { "id": "2", "name": "Jane Doe" } }
+    ]
+  }
+}
+```
+
+---
+
+## **Explanation**
+
+### **1. Microservices Architecture**
+- The **Users Service** (`users-service.ts`) serves user-related data.
+- The **Orders Service** (`orders-service.ts`) serves order-related data.
+- The **Apollo Gateway** (`gateway.ts`) combines them into a single GraphQL schema.
+
+### **2. Federation Directives**
+- `@key(fields: "id")` - Marks `id` as the unique identifier.
+- `@external` - Indicates that a field exists in another service.
+
+### **3. Gateway Aggregation**
+The `ApolloGateway` fetches data from multiple microservices, resolving dependencies dynamically.
+
+---
+
+## **Conclusion**
+This setup enables **schema federation** in a GraphQL microservices architecture, making it scalable and modular.
+
+Let me know if you need further clarifications! 🚀
+
+## Update server.ts
+To convert the provided code to use an `async` function, we need to wrap the `await` calls inside an `async` function since `await` can only be used inside an `async` function. Here's the properly structured **async** function:
+
+### **Updated Code with Async Function**
+```ts
+import { ApolloServer } from "@apollo/server";
+import { startStandaloneServer } from '@apollo/server/standalone';
+import { ApolloGateway, IntrospectAndCompose } from "@apollo/gateway";
+
+async function startServer() {
+  const gateway = new ApolloGateway({
+    supergraphSdl: new IntrospectAndCompose({
+      subgraphs: [
+        { name: "users", url: "http://localhost:4001" },
+        { name: "orders", url: "http://localhost:4002" },
+      ],
+    }),
+  });
+
+  const server = new ApolloServer({ gateway });
+
+  // Await inside the async function
+  const { url } = await startStandaloneServer(server);
+  console.log(`🚀  Server ready at ${url}`);
+}
+
+// Call the async function
+startServer().catch(error => {
+  console.error("Error starting the server:", error);
+});
+```
+
+### **Why This Works**
+1. **Encapsulated in `async function`**: `await` is used inside `async function startServer()`.
+2. **Error Handling**: `.catch(error => console.error(...))` ensures graceful error handling.
+3. **Function Execution**: `startServer()` is explicitly called at the end.
+
+This method is more structured and prevents top-level `await` errors in some environments (Node.js versions <14.8). 🚀
+
+## Run with single command 
+Yes! You can run all three services (`users`, `orders`, and `dev`) with a single command using **concurrently**, a package that allows you to run multiple scripts simultaneously.
+
+### **Step 1: Install `concurrently`**
+Run the following command in your project:
+```sh
+npm install concurrently --save-dev
+```
+
+### **Step 2: Update `package.json` Scripts**
+Modify your `scripts` section in `package.json` like this:
+```json
+"scripts": {
+  "dev": "tsx watch src/index.ts",
+  "users": "tsx watch src/users-service.ts",
+  "orders": "tsx watch src/orders-service.ts",
+  "start:all": "concurrently -k -n \"USERS,ORDERS,GATEWAY\" -c \"blue,green,magenta\" \"npm run users\" \"npm run orders\" \"npm run dev\"",
+  "test": "echo \"Error: no test specified\" && exit 1"
+}
+```
+
+### **Step 3: Run All Services with a Single Command**
+Now, run the following command to start everything:
+```sh
+npm run start:all
+```
+
+### **Explanation**
+- `concurrently`: Runs multiple commands simultaneously.
+- `-k`: Ensures that if one process is killed, all are stopped.
+- `-n "USERS,ORDERS,GATEWAY"`: Assigns custom names to processes.
+- `-c "blue,green,magenta"`: Colors the logs for better readability.
+- `"npm run users" "npm run orders" "npm run dev"`: Runs all services in parallel.
+
+Now, all three services (`users-service.ts`, `orders-service.ts`, and `index.ts`) will start together with a single command! 🚀

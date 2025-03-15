@@ -1,33 +1,25 @@
-import express from "express";
-import { ApolloServer } from "apollo-server-express";
-import { typeDefs } from "./schema";
-import { resolvers } from "./resolvers";
-import { connectDB } from "./database";
-import userLoader from "./loaders/userLoader";
+import { ApolloServer } from "@apollo/server";
+import { startStandaloneServer } from "@apollo/server/standalone";
+import { ApolloGateway, IntrospectAndCompose } from "@apollo/gateway";
 
-const startServer = async () => {
-  const app = express();
-
-  // Connect to MongoDB
-  await connectDB();
-
-  // Create Apollo Server
-  const server = new ApolloServer({
-    typeDefs,
-    resolvers,
-    context: () => ({
-      loaders: {
-        userLoader
-      }
-    })
+async function startServer() {
+  const gateway = new ApolloGateway({
+    supergraphSdl: new IntrospectAndCompose({
+      subgraphs: [
+        { name: "users", url: "http://localhost:4001" },
+        { name: "orders", url: "http://localhost:4002" },
+      ],
+    }),
   });
 
-  await server.start();
-  server.applyMiddleware({ app });
+  const server = new ApolloServer({ gateway });
 
-  app.listen(4000, () => {
-    console.log("🚀 Server ready at http://localhost:4000/graphql");
-  });
-};
+  // Await inside the async function
+  const { url } = await startStandaloneServer(server);
+  console.log(`🚀  Server ready at ${url}`);
+}
 
-startServer();
+// Call the async function
+startServer().catch((error) => {
+  console.error("Error starting the server:", error);
+});
