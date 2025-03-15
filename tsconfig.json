@@ -5,7 +5,9 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "typeRoots": ["node_modules/@types", "node_modules/graphql-ws"]
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
