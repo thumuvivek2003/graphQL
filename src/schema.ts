@@ -1,22 +1,19 @@
-// src/schema.ts
-import { gql } from 'apollo-server-express';
+import { gql } from "apollo-server-express";
 
 export const typeDefs = gql`
-  type Message {
+  type User {
     id: ID!
+    name: String!
+  }
+
+  type Post {
+    id: ID!
+    title: String!
     content: String!
-    createdAt: String!
+    user: User!
   }
 
   type Query {
-    messages: [Message!]!
-  }
-
-  type Mutation {
-    postMessage(content: String!): Message!
-  }
-
-  type Subscription {
-    messageAdded: Message!
+    posts: [Post!]!
   }
 `;

@@ -4404,3 +4404,230 @@ query {
 ### Conclusion:
 
 This is a complete implementation of cursor-based pagination in Apollo Server with TypeScript. You can refine the pagination logic further by adding more error handling, using a real database (e.g., MongoDB or PostgreSQL), and optimizing for large datasets. Cursor-based pagination is great for scenarios where the data is constantly changing and you need to avoid issues like missing data or duplicate data in paginated results.
+
+
+## Task 21 
+### **Using DataLoader in a Node.js + TypeScript + Apollo + MongoDB Application**
+
+The **N+1 problem** occurs when fetching related data results in multiple database queries, leading to performance bottlenecks. **DataLoader** is a utility that helps batch and cache database queries to improve performance.
+
+---
+
+## **Step 1: Install Dependencies**
+First, install the necessary dependencies:
+```sh
+npm install apollo-server-express express graphql mongoose dataloader
+npm install --save-dev @types/graphql @types/express
+```
+
+---
+
+## **Step 2: Set Up the Project Structure**
+```
+/src
+  |-- index.ts
+  |-- schema.ts
+  |-- resolvers.ts
+  |-- models
+        |-- User.ts
+        |-- Post.ts
+  |-- loaders
+        |-- userLoader.ts
+  |-- database.ts
+```
+
+---
+
+## **Step 3: Define MongoDB Models (Mongoose)**
+
+### **User Model (`src/models/User.ts`)**
+```ts
+import mongoose from "mongoose";
+
+const userSchema = new mongoose.Schema({
+  name: String,
+});
+
+export const User = mongoose.model("User", userSchema);
+```
+
+### **Post Model (`src/models/Post.ts`)**
+```ts
+import mongoose from "mongoose";
+
+const postSchema = new mongoose.Schema({
+  title: String,
+  content: String,
+  userId: mongoose.Schema.Types.ObjectId,  // Reference to User
+});
+
+export const Post = mongoose.model("Post", postSchema);
+```
+
+---
+
+## **Step 4: Define GraphQL Schema**
+### **GraphQL Schema (`src/schema.ts`)**
+```ts
+import { gql } from "apollo-server-express";
+
+export const typeDefs = gql`
+  type User {
+    id: ID!
+    name: String!
+  }
+
+  type Post {
+    id: ID!
+    title: String!
+    content: String!
+    user: User!
+  }
+
+  type Query {
+    posts: [Post!]!
+  }
+`;
+```
+
+---
+
+## **Step 5: Create a DataLoader**
+Instead of making individual queries for each post’s user, **DataLoader** batches requests.
+
+### **User DataLoader (`src/loaders/userLoader.ts`)**
+```ts
+import DataLoader from "dataloader";
+import { User } from "../models/User";
+import mongoose from "mongoose";
+
+const userLoader = new DataLoader(async (userIds: mongoose.Types.ObjectId[]) => {
+  // Fetch users in a single query
+  const users = await User.find({ _id: { $in: userIds } });
+
+  // Map users by ID for quick lookup
+  const userMap = new Map(users.map(user => [user._id.toString(), user]));
+
+  // Return users in the same order as requested
+  return userIds.map(id => userMap.get(id.toString()));
+});
+
+export default userLoader;
+```
+
+---
+
+## **Step 6: Define GraphQL Resolvers**
+### **Resolvers (`src/resolvers.ts`)**
+```ts
+import { Post } from "./models/Post";
+import { User } from "./models/User";
+import userLoader from "./loaders/userLoader";
+
+export const resolvers = {
+  Query: {
+    posts: async () => {
+      return await Post.find();
+    },
+  },
+  Post: {
+    // Optimize fetching users with DataLoader
+    user: async (post, _, { loaders }) => {
+      return loaders.userLoader.load(post.userId);
+    },
+  },
+};
+```
+
+---
+
+## **Step 7: Set Up Apollo Server**
+### **Database Connection (`src/database.ts`)**
+```ts
+import mongoose from "mongoose";
+
+export const connectDB = async () => {
+  await mongoose.connect("mongodb://127.0.0.1:27017/graphql_dataloader", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+  console.log("MongoDB Connected");
+};
+```
+
+### **Server Setup (`src/index.ts`)**
+```ts
+import express from "express";
+import { ApolloServer } from "apollo-server-express";
+import { typeDefs } from "./schema";
+import { resolvers } from "./resolvers";
+import { connectDB } from "./database";
+import userLoader from "./loaders/userLoader";
+
+const startServer = async () => {
+  const app = express();
+
+  // Connect to MongoDB
+  await connectDB();
+
+  // Create Apollo Server
+  const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    context: () => ({
+      loaders: {
+        userLoader
+      }
+    })
+  });
+
+  await server.start();
+  server.applyMiddleware({ app });
+
+  app.listen(4000, () => {
+    console.log("🚀 Server ready at http://localhost:4000/graphql");
+  });
+};
+
+startServer();
+```
+
+---
+
+## **Step 8: Run the Application**
+Start the server:
+```sh
+npx ts-node src/index.ts
+```
+
+---
+
+## **Step 9: Test the Optimization**
+### **Without DataLoader (Inefficient)**
+If we query:
+```graphql
+query {
+  posts {
+    title
+    user {
+      name
+    }
+  }
+}
+```
+Without **DataLoader**, if we have **10 posts**, it will make **10 separate queries** to fetch users.
+
+### **With DataLoader (Optimized)**
+With **DataLoader**, it **batches all user queries into a single request** like:
+```ts
+User.find({ _id: { $in: [...] } })
+```
+This minimizes database hits and **resolves the N+1 query problem**.
+
+---
+
+## **Conclusion**
+- **Before DataLoader** → Multiple separate queries to fetch users for each post.
+- **After DataLoader** → One batched query, significantly improving performance.
+
+With this setup, your Apollo GraphQL server in Node.js with TypeScript and MongoDB is now optimized for fetching related data efficiently. 🚀

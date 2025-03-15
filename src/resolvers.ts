@@ -1,27 +1,17 @@
-import { PubSub } from "graphql-subscriptions";
-import { v4 as uuidv4 } from "uuid";
-export const pubsub = new PubSub();
-export const MESSAGE_ADDED = "MESSAGE_ADDED";
-const messages: any[] = [];
+import { Post } from "./models/Post";
+import { User } from "./models/User";
+import userLoader from "./loaders/userLoader";
+
 export const resolvers = {
   Query: {
-    messages: () => messages,
-  },
-  Mutation: {
-    postMessage: (_: any, { content }: { content: string }) => {
-      const message = {
-        id: uuidv4(),
-        content,
-        createdAt: new Date().toISOString(),
-      };
-      messages.push(message);
-      pubsub.publish(MESSAGE_ADDED, { messageAdded: message });
-      return message;
+    posts: async () => {
+      return await Post.find();
     },
   },
-  Subscription: {
-    messageAdded: {
-      subscribe: () => pubsub.asyncIterableIterator([MESSAGE_ADDED]),
+  Post: {
+    // Optimize fetching users with DataLoader
+    user: async (post, _, { loaders }) => {
+      return loaders.userLoader.load(post.userId);
     },
   },
 };
