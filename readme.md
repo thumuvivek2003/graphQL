@@ -1,3 +1,19 @@
+## **GraphQL Guide from GPTS**
+
+
+---
+
+##### Follow Vivek Thumu on LinkedIn for more:
+
+[LinkedIn Profile](https://www.linkedin.com/in/vivek-thumu-179162250/
+)
+
+---
+
+
+
+
+
 | **ID** | **Project/Task Name**                       | **Learning Outcomes**                                                                            | **Task Description**                                                                                                                                                              |
 | ------ | ------------------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1      | Setup Node.js GraphQL Server                | Basics, Server Setup                                                                             | Create your first Node.js server with Express and GraphQL, configure initial schema and resolvers.                                                                                |
@@ -22,14 +38,6 @@
 | 20     | GraphQL Subscriptions                       | Real-Time Data Updates, WebSockets                                                               | Build GraphQL subscriptions using WebSockets for real-time data updates.                                                                                                          |
 | 21     | DataLoader Usage                            | Performance Optimization                                                                         | Implement DataLoader library to optimize fetching efficiency and resolve the N+1 query problem.                                                                                   |
 | 22     | Schema Stitching and Federation             | Schema Management, Microservices                                                                 | Combine multiple GraphQL schemas from different services into one unified schema using Apollo Federation.                                                                         |
-| 23     | GraphQL File Uploads                        | Handling Files, Multipart Requests                                                               | Set up GraphQL server to handle file uploads using GraphQL multipart request specifications.                                                                                      |
-| 24     | Logging and Monitoring GraphQL APIs         | Observability, Logging Tools                                                                     | Implement logging, tracing, and monitoring mechanisms in GraphQL applications using libraries like Apollo Studio.                                                                 |
-| 25     | Caching in GraphQL                          | Performance, Caching Techniques                                                                  | Implement basic caching strategies (In-memory cache, Redis) for optimizing GraphQL response performance.                                                                          |
-| 26     | Integration with Databases (MongoDB)        | Database Integration                                                                             | Connect your GraphQL server to MongoDB using Mongoose to manage persistent storage.                                                                                               |
-| 27     | Integration with Databases (SQL, Sequelize) | ORM Usage                                                                                        | Integrate SQL databases (e.g., PostgreSQL, MySQL) with GraphQL API via Sequelize ORM and perform CRUD operations.                                                                 |
-| 28     | Testing GraphQL APIs                        | Testing Methods                                                                                  | Write unit tests and integration tests for GraphQL APIs using Jest and Apollo Server Testing tools.                                                                               |
-| 29     | Deployment of GraphQL Server                | Deployment, Hosting                                                                              | Deploy the GraphQL server to cloud services (Heroku, AWS, or DigitalOcean), configure environment variables, and optimize for production use.                                     |
-| 30     | Project Capstone                            | End-to-End GraphQL Application                                                                   | Build an end-to-end GraphQL app integrating authentication, authorization, database storage, file uploads, subscriptions, schema federation, testing, monitoring, and deployment. |
 
 ### GraphQL Mutations
 
